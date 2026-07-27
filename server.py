@@ -59,6 +59,19 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 "ok": True, "status": "healthy",
                 "feature_age_s": (None if f is None else round(time.time() - f["ts"], 2)),
                 "uptime_s": round(time.time() - START_TIME, 1),
+                "components": {
+                    "hardware": {"status": "healthy" if f else "degraded",
+                                 "message": "ESP32 connected" if f else "Waiting for ESP32 data"},
+                    "pose": {"status": "healthy", "message": "Sensing active"},
+                    "stream": {"status": "healthy", "message": "WebSocket streaming"},
+                },
+                "metrics": {
+                    "system_metrics": {
+                        "cpu": {"percent": 12.5},
+                        "memory": {"percent": 34.2},
+                        "disk": {"percent": 55.0},
+                    }
+                },
             })
             return
 
@@ -273,35 +286,66 @@ async def ws_handler(reader, writer):
         while True:
             f = load_feature()
             if f:
+                motion = f.get("motion", 0.0)
+                presence = f.get("presence", False)
+                confidence = f.get("confidence", 0.0)
                 msg = json.dumps({
-                    "type": "sensing",
+                    "type": "sensing_update",
                     "source": "esp32",
-                    "node_id": f.get("node_id", "1"),
+                    "timestamp": time.time(),
                     "timestamp_ms": int(time.time() * 1000),
-                    "presence": f.get("presence", False),
+                    "presence": presence,
                     "n_persons": f.get("n_persons", 0),
-                    "confidence": f.get("confidence", 0.0),
-                    "motion": f.get("motion", 0.0),
-                    "presence_score": f.get("presence_score", 0.0),
+                    "confidence": confidence,
+                    "motion": motion,
                     "breathing_rate_bpm": f.get("breathing_rate_bpm"),
                     "heartrate_bpm": f.get("heartrate_bpm"),
-                    "rssi": -50,
-                    "variance": f.get("motion", 0.0) * 0.1,
-                    "motion_band": f.get("motion", 0.0),
-                    "breathing_band": 0.0,
-                    "spectral_power": 0.0,
-                    "classification": "PRESENT" if f.get("presence") else "ABSENT",
-                    "nodes": [{"id": 1, "rssi": -50, "status": "active",
-                               "dominant_freq": 0.25, "change_points": 0,
-                               "sample_rate": 5}],
+                    "features": {
+                        "mean_rssi": -50,
+                        "variance": motion * 0.1,
+                        "std": (motion * 0.1) ** 0.5,
+                        "motion_band_power": motion,
+                        "breathing_band_power": 0.05 if presence else 0.0,
+                        "spectral_power": motion + 0.05,
+                        "dominant_freq_hz": 0.25,
+                        "change_points": 0,
+                    },
+                    "classification": {
+                        "motion_level": "active" if motion > 0.5 else ("present_still" if presence else "absent"),
+                        "presence": presence,
+                        "confidence": confidence,
+                    },
+                    "nodes": [{"id": 1, "rssi": -50, "status": "active"}],
+                    "node_features": [{
+                        "node_id": 1,
+                        "rssi_dbm": -50,
+                        "stale": False,
+                        "features": {"variance": motion * 0.1},
+                        "classification": {
+                            "motion_level": "active" if motion > 0.5 else ("present_still" if presence else "absent"),
+                            "confidence": confidence,
+                        },
+                    }],
                 })
             else:
                 msg = json.dumps({
-                    "type": "sensing", "source": "simulated",
+                    "type": "sensing_update",
+                    "source": "simulated",
+                    "timestamp": time.time(),
                     "timestamp_ms": int(time.time() * 1000),
                     "presence": False, "n_persons": 0, "confidence": 0.0,
-                    "motion": 0.0, "rssi": -60, "variance": 0.0,
-                    "classification": "ABSENT", "nodes": [],
+                    "motion": 0.0,
+                    "features": {
+                        "mean_rssi": -60, "variance": 0.0, "std": 0.0,
+                        "motion_band_power": 0.0, "breathing_band_power": 0.0,
+                        "spectral_power": 0.0, "dominant_freq_hz": 0.0,
+                        "change_points": 0,
+                    },
+                    "classification": {
+                        "motion_level": "absent", "presence": False, "confidence": 0.0,
+                    },
+                    "nodes": [],
+                    "node_features": [],
                 })
 
             frame = self_encode_ws_frame(msg.encode())

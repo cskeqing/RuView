@@ -1,5 +1,6 @@
 // SettingsPanel Component for WiFi-DensePose UI
 
+import { i18n } from '../utils/i18n.js';
 import { poseService } from '../services/pose.service.js';
 import { wsService } from '../services/websocket.service.js';
 
@@ -119,20 +120,20 @@ export class SettingsPanel {
     this.container.innerHTML = `
       <div class="settings-panel">
         <div class="settings-header">
-          <h3>Pose Detection Settings</h3>
+          <h3>${i18n.t('set.title')}</h3>
           <div class="settings-actions">
-            <button class="btn btn-sm" id="reset-settings-${this.containerId}">Reset</button>
-            <button class="btn btn-sm" id="export-settings-${this.containerId}">Export</button>
-            <button class="btn btn-sm" id="import-settings-${this.containerId}">Import</button>
+            <button class="btn btn-sm" id="reset-settings-${this.containerId}">${i18n.t('set.reset')}</button>
+            <button class="btn btn-sm" id="export-settings-${this.containerId}">${i18n.t('set.export')}</button>
+            <button class="btn btn-sm" id="import-settings-${this.containerId}">${i18n.t('set.import')}</button>
           </div>
         </div>
         
         <div class="settings-content">
           <!-- Connection Settings -->
           <div class="settings-section">
-            <h4>Connection</h4>
+            <h4>${i18n.t('set.connection')}</h4>
             <div class="setting-row">
-              <label for="zone-select-${this.containerId}">Zone:</label>
+              <label for="zone-select-${this.containerId}">${i18n.t('set.zone')}</label>
               <select id="zone-select-${this.containerId}" class="setting-select">
                 ${this.settings.zones.map(zone => 
                   `<option value="${zone}">${zone.replace('_', ' ').toUpperCase()}</option>`
@@ -140,196 +141,196 @@ export class SettingsPanel {
               </select>
             </div>
             <div class="setting-row">
-              <label for="auto-reconnect-${this.containerId}">Auto Reconnect:</label>
+              <label for="auto-reconnect-${this.containerId}">${i18n.t('set.autoReconnect')}</label>
               <input type="checkbox" id="auto-reconnect-${this.containerId}" class="setting-checkbox">
             </div>
             <div class="setting-row">
-              <label for="connection-timeout-${this.containerId}">Timeout (ms):</label>
+              <label for="connection-timeout-${this.containerId}">${i18n.t('set.timeout')}</label>
               <input type="number" id="connection-timeout-${this.containerId}" class="setting-input" min="1000" max="30000" step="1000">
             </div>
           </div>
 
           <!-- Detection Settings -->
           <div class="settings-section">
-            <h4>Detection</h4>
+            <h4>${i18n.t('set.detection')}</h4>
             <div class="setting-row">
-              <label for="confidence-threshold-${this.containerId}">Confidence Threshold:</label>
+              <label for="confidence-threshold-${this.containerId}">${i18n.t('set.confThreshold')}</label>
               <input type="range" id="confidence-threshold-${this.containerId}" class="setting-range" min="0" max="1" step="0.1">
               <span id="confidence-value-${this.containerId}" class="setting-value">0.3</span>
             </div>
             <div class="setting-row">
-              <label for="keypoint-confidence-${this.containerId}">Keypoint Confidence:</label>
+              <label for="keypoint-confidence-${this.containerId}">${i18n.t('set.kpConfidence')}</label>
               <input type="range" id="keypoint-confidence-${this.containerId}" class="setting-range" min="0" max="1" step="0.1">
               <span id="keypoint-confidence-value-${this.containerId}" class="setting-value">0.1</span>
             </div>
             <div class="setting-row">
-              <label for="max-persons-${this.containerId}">Max Persons:</label>
+              <label for="max-persons-${this.containerId}">${i18n.t('set.maxPersons')}</label>
               <input type="number" id="max-persons-${this.containerId}" class="setting-input" min="1" max="20">
             </div>
             <div class="setting-row">
-              <label for="max-fps-${this.containerId}">Max FPS:</label>
+              <label for="max-fps-${this.containerId}">${i18n.t('set.maxFps')}</label>
               <input type="number" id="max-fps-${this.containerId}" class="setting-input" min="1" max="60">
             </div>
           </div>
 
           <!-- Rendering Settings -->
           <div class="settings-section">
-            <h4>Rendering</h4>
+            <h4>${i18n.t('set.rendering')}</h4>
             <div class="setting-row">
-              <label for="render-mode-${this.containerId}">Mode:</label>
+              <label for="render-mode-${this.containerId}">${i18n.t('set.mode')}</label>
               <select id="render-mode-${this.containerId}" class="setting-select">
-                <option value="skeleton">Skeleton</option>
-                <option value="keypoints">Keypoints</option>
-                <option value="heatmap">Heatmap</option>
-                <option value="dense">Dense</option>
+                <option value="skeleton">${i18n.t('set.skeleton')}</option>
+                <option value="keypoints">${i18n.t('set.keypoints')}</option>
+                <option value="heatmap">${i18n.t('set.heatmap')}</option>
+                <option value="dense">${i18n.t('set.dense')}</option>
               </select>
             </div>
             <div class="setting-row">
-              <label for="show-keypoints-${this.containerId}">Show Keypoints:</label>
+              <label for="show-keypoints-${this.containerId}">${i18n.t('set.showKeypoints')}</label>
               <input type="checkbox" id="show-keypoints-${this.containerId}" class="setting-checkbox">
             </div>
             <div class="setting-row">
-              <label for="show-skeleton-${this.containerId}">Show Skeleton:</label>
+              <label for="show-skeleton-${this.containerId}">${i18n.t('set.showSkeleton')}</label>
               <input type="checkbox" id="show-skeleton-${this.containerId}" class="setting-checkbox">
             </div>
             <div class="setting-row">
-              <label for="show-bounding-box-${this.containerId}">Show Bounding Box:</label>
+              <label for="show-bounding-box-${this.containerId}">${i18n.t('set.showBbox')}</label>
               <input type="checkbox" id="show-bounding-box-${this.containerId}" class="setting-checkbox">
             </div>
             <div class="setting-row">
-              <label for="show-confidence-${this.containerId}">Show Confidence:</label>
+              <label for="show-confidence-${this.containerId}">${i18n.t('set.showConfidence')}</label>
               <input type="checkbox" id="show-confidence-${this.containerId}" class="setting-checkbox">
             </div>
             <div class="setting-row">
-              <label for="show-zones-${this.containerId}">Show Zones:</label>
+              <label for="show-zones-${this.containerId}">${i18n.t('set.showZones')}</label>
               <input type="checkbox" id="show-zones-${this.containerId}" class="setting-checkbox">
             </div>
             <div class="setting-row">
-              <label for="show-debug-info-${this.containerId}">Show Debug Info:</label>
+              <label for="show-debug-info-${this.containerId}">${i18n.t('set.showDebug')}</label>
               <input type="checkbox" id="show-debug-info-${this.containerId}" class="setting-checkbox">
             </div>
           </div>
 
           <!-- Color Settings -->
           <div class="settings-section">
-            <h4>Colors</h4>
+            <h4>${i18n.t('set.colors')}</h4>
             <div class="setting-row">
-              <label for="skeleton-color-${this.containerId}">Skeleton:</label>
+              <label for="skeleton-color-${this.containerId}">${i18n.t('set.skeletonColor')}</label>
               <input type="color" id="skeleton-color-${this.containerId}" class="setting-color">
             </div>
             <div class="setting-row">
-              <label for="keypoint-color-${this.containerId}">Keypoints:</label>
+              <label for="keypoint-color-${this.containerId}">${i18n.t('set.kpColor')}</label>
               <input type="color" id="keypoint-color-${this.containerId}" class="setting-color">
             </div>
             <div class="setting-row">
-              <label for="bounding-box-color-${this.containerId}">Bounding Box:</label>
+              <label for="bounding-box-color-${this.containerId}">${i18n.t('set.bboxColor')}</label>
               <input type="color" id="bounding-box-color-${this.containerId}" class="setting-color">
             </div>
           </div>
 
           <!-- Performance Settings -->
           <div class="settings-section">
-            <h4>Performance</h4>
+            <h4>${i18n.t('set.performance')}</h4>
             <div class="setting-row">
-              <label for="enable-validation-${this.containerId}">Enable Validation:</label>
+              <label for="enable-validation-${this.containerId}">${i18n.t('set.enableValidation')}</label>
               <input type="checkbox" id="enable-validation-${this.containerId}" class="setting-checkbox">
             </div>
             <div class="setting-row">
-              <label for="enable-performance-tracking-${this.containerId}">Performance Tracking:</label>
+              <label for="enable-performance-tracking-${this.containerId}">${i18n.t('set.perfTracking')}</label>
               <input type="checkbox" id="enable-performance-tracking-${this.containerId}" class="setting-checkbox">
             </div>
             <div class="setting-row">
-              <label for="enable-debug-logging-${this.containerId}">Debug Logging:</label>
+              <label for="enable-debug-logging-${this.containerId}">${i18n.t('set.debugLogging')}</label>
               <input type="checkbox" id="enable-debug-logging-${this.containerId}" class="setting-checkbox">
             </div>
             <div class="setting-row">
-              <label for="enable-smoothing-${this.containerId}">Enable Smoothing:</label>
+              <label for="enable-smoothing-${this.containerId}">${i18n.t('set.enableSmoothing')}</label>
               <input type="checkbox" id="enable-smoothing-${this.containerId}" class="setting-checkbox">
             </div>
           </div>
 
           <!-- Advanced Settings -->
           <div class="settings-section advanced-section" id="advanced-section-${this.containerId}" style="display: none;">
-            <h4>Advanced</h4>
+            <h4>${i18n.t('set.advanced')}</h4>
             <div class="setting-row">
-              <label for="heartbeat-interval-${this.containerId}">Heartbeat Interval (ms):</label>
+              <label for="heartbeat-interval-${this.containerId}">${i18n.t('set.heartbeat')}</label>
               <input type="number" id="heartbeat-interval-${this.containerId}" class="setting-input" min="5000" max="60000" step="5000">
             </div>
             <div class="setting-row">
-              <label for="max-reconnect-attempts-${this.containerId}">Max Reconnect Attempts:</label>
+              <label for="max-reconnect-attempts-${this.containerId}">${i18n.t('set.maxReconnect')}</label>
               <input type="number" id="max-reconnect-attempts-${this.containerId}" class="setting-input" min="1" max="20">
             </div>
           </div>
           
           <!-- Model Settings -->
           <div class="settings-section">
-            <h4>Model Configuration</h4>
+            <h4>${i18n.t('set.modelConfig')}</h4>
             <div class="setting-row">
-              <label for="default-model-path-${this.containerId}">Default Model Path:</label>
+              <label for="default-model-path-${this.containerId}">${i18n.t('set.modelPath')}</label>
               <input type="text" id="default-model-path-${this.containerId}" class="setting-input setting-input-wide" placeholder="data/models/">
             </div>
             <div class="setting-row">
-              <label for="auto-load-model-${this.containerId}">Auto-load Model on Startup:</label>
+              <label for="auto-load-model-${this.containerId}">${i18n.t('set.autoLoadModel')}</label>
               <input type="checkbox" id="auto-load-model-${this.containerId}" class="setting-checkbox">
             </div>
             <div class="setting-row">
-              <label for="inference-device-${this.containerId}">Inference Device:</label>
+              <label for="inference-device-${this.containerId}">${i18n.t('set.inferDevice')}</label>
               <select id="inference-device-${this.containerId}" class="setting-select">
                 <option value="CPU">CPU</option>
                 <option value="GPU">GPU</option>
               </select>
             </div>
             <div class="setting-row">
-              <label for="inference-threads-${this.containerId}">Inference Threads:</label>
+              <label for="inference-threads-${this.containerId}">${i18n.t('set.inferThreads')}</label>
               <input type="number" id="inference-threads-${this.containerId}" class="setting-input" min="1" max="16">
             </div>
             <div class="setting-row">
-              <label for="progressive-loading-${this.containerId}">Progressive Loading:</label>
+              <label for="progressive-loading-${this.containerId}">${i18n.t('set.progressiveLoad')}</label>
               <input type="checkbox" id="progressive-loading-${this.containerId}" class="setting-checkbox">
             </div>
           </div>
 
           <!-- Training Settings -->
           <div class="settings-section">
-            <h4>Training Configuration</h4>
+            <h4>${i18n.t('set.trainingConfig')}</h4>
             <div class="setting-row">
-              <label for="default-epochs-${this.containerId}">Default Epochs:</label>
+              <label for="default-epochs-${this.containerId}">${i18n.t('set.epochs')}</label>
               <input type="number" id="default-epochs-${this.containerId}" class="setting-input" min="1" max="10000">
             </div>
             <div class="setting-row">
-              <label for="default-batch-size-${this.containerId}">Default Batch Size:</label>
+              <label for="default-batch-size-${this.containerId}">${i18n.t('set.batchSize')}</label>
               <input type="number" id="default-batch-size-${this.containerId}" class="setting-input" min="1" max="512">
             </div>
             <div class="setting-row">
-              <label for="default-learning-rate-${this.containerId}">Default Learning Rate:</label>
+              <label for="default-learning-rate-${this.containerId}">${i18n.t('set.learningRate')}</label>
               <input type="number" id="default-learning-rate-${this.containerId}" class="setting-input" min="0.000001" max="1" step="0.0001">
             </div>
             <div class="setting-row">
-              <label for="early-stopping-patience-${this.containerId}">Early Stopping Patience:</label>
+              <label for="early-stopping-patience-${this.containerId}">${i18n.t('set.earlyStop')}</label>
               <input type="number" id="early-stopping-patience-${this.containerId}" class="setting-input" min="1" max="100">
             </div>
             <div class="setting-row">
-              <label for="checkpoint-directory-${this.containerId}">Checkpoint Directory:</label>
+              <label for="checkpoint-directory-${this.containerId}">${i18n.t('set.checkpointDir')}</label>
               <input type="text" id="checkpoint-directory-${this.containerId}" class="setting-input setting-input-wide" placeholder="data/models/">
             </div>
             <div class="setting-row">
-              <label for="auto-export-on-completion-${this.containerId}">Auto-export on Completion:</label>
+              <label for="auto-export-on-completion-${this.containerId}">${i18n.t('set.autoExport')}</label>
               <input type="checkbox" id="auto-export-on-completion-${this.containerId}" class="setting-checkbox">
             </div>
             <div class="setting-row">
-              <label for="recording-directory-${this.containerId}">Recording Directory:</label>
+              <label for="recording-directory-${this.containerId}">${i18n.t('set.recordingDir')}</label>
               <input type="text" id="recording-directory-${this.containerId}" class="setting-input setting-input-wide" placeholder="data/recordings/">
             </div>
           </div>
 
           <div class="settings-toggle">
-            <button class="btn btn-sm" id="toggle-advanced-${this.containerId}">Show Advanced</button>
+            <button class="btn btn-sm" id="toggle-advanced-${this.containerId}">${i18n.t('set.showAdvanced')}</button>
           </div>
         </div>
         
         <div class="settings-footer">
           <div class="settings-status" id="settings-status-${this.containerId}">
-            Settings loaded
+            ${i18n.t('set.loaded')}
           </div>
         </div>
       </div>
@@ -682,7 +683,7 @@ export class SettingsPanel {
     this.settings[key] = value;
     this.saveSettings();
     this.notifyCallback('onSettingsChange', { key, value, settings: this.settings });
-    this.updateStatus(`Updated ${key}`);
+    this.updateStatus(i18n.t('set.updated', {key}));
     this.logger.debug('Setting updated', { key, value });
   }
 
@@ -726,18 +727,18 @@ export class SettingsPanel {
     
     const isVisible = advancedSection.style.display !== 'none';
     advancedSection.style.display = isVisible ? 'none' : 'block';
-    toggleBtn.textContent = isVisible ? 'Show Advanced' : 'Hide Advanced';
+    toggleBtn.textContent = isVisible ? i18n.t('set.showAdvanced') : i18n.t('set.hideAdvanced');
     
     this.logger.debug('Advanced settings toggled', { visible: !isVisible });
   }
 
   resetSettings() {
-    if (confirm('Reset all settings to defaults? This cannot be undone.')) {
+    if (confirm(i18n.t('set.confirmReset'))) {
       this.settings = this.getDefaultSettings();
       this.updateUI();
       this.saveSettings();
       this.notifyCallback('onSettingsChange', { reset: true, settings: this.settings });
-      this.updateStatus('Settings reset to defaults');
+      this.updateStatus(i18n.t('set.resetDone'));
       this.logger.info('Settings reset to defaults');
     }
   }
@@ -757,7 +758,7 @@ export class SettingsPanel {
     a.click();
     URL.revokeObjectURL(url);
     
-    this.updateStatus('Settings exported');
+    this.updateStatus(i18n.t('set.exported'));
     this.notifyCallback('onExport', data);
     this.logger.info('Settings exported');
   }
@@ -777,15 +778,15 @@ export class SettingsPanel {
           this.saveSettings();
           this.notifyCallback('onSettingsChange', { imported: true, settings: this.settings });
           this.notifyCallback('onImport', data);
-          this.updateStatus('Settings imported successfully');
+          this.updateStatus(i18n.t('set.imported'));
           this.logger.info('Settings imported successfully');
         } else {
           throw new Error('Invalid settings file format');
         }
       } catch (error) {
-        this.updateStatus('Error importing settings');
+        this.updateStatus(i18n.t('set.importError'));
         this.logger.error('Error importing settings', { error: error.message });
-        alert('Error importing settings: ' + error.message);
+        alert(i18n.t('set.importError') + ': ' + error.message);
       }
     };
     
@@ -865,7 +866,7 @@ export class SettingsPanel {
       
       // Clear status after 3 seconds
       setTimeout(() => {
-        statusElement.textContent = 'Settings ready';
+        statusElement.textContent = i18n.t('set.ready');
       }, 3000);
     }
   }
@@ -915,11 +916,11 @@ export class SettingsPanel {
         });
       }
 
-      this.updateStatus('Settings applied to services');
+      this.updateStatus(i18n.t('set.applied'));
       this.logger.info('Settings applied to services');
     } catch (error) {
       this.logger.error('Error applying settings to services', { error: error.message });
-      this.updateStatus('Error applying settings');
+      this.updateStatus(i18n.t('set.applyError'));
     }
   }
 

@@ -1,6 +1,8 @@
 // Notification Center - Bell icon with event history
 // Persists notifications across page views (sessionStorage)
 
+import { i18n } from './i18n.js';
+
 export class NotificationCenter {
   constructor() {
     this.button = null;
@@ -22,8 +24,8 @@ export class NotificationCenter {
   createButton() {
     this.button = document.createElement('button');
     this.button.className = 'notif-bell';
-    this.button.setAttribute('aria-label', 'Notifications');
-    this.button.setAttribute('title', 'Notifications');
+    this.button.setAttribute('aria-label', i18n.t('notif.title'));
+    this.button.setAttribute('title', i18n.t('notif.title'));
     this.button.innerHTML = `
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
@@ -45,13 +47,13 @@ export class NotificationCenter {
     this.panel = document.createElement('div');
     this.panel.className = 'notif-panel';
     this.panel.setAttribute('role', 'region');
-    this.panel.setAttribute('aria-label', 'Notification history');
+    this.panel.setAttribute('aria-label', i18n.t('notif.history'));
     this.panel.innerHTML = `
       <div class="notif-panel-header">
-        <span>Notifications</span>
+        <span>${i18n.t('notif.title')}</span>
         <div class="notif-panel-actions">
-          <button class="notif-mark-read" title="Mark all read">Mark read</button>
-          <button class="notif-clear" title="Clear all">Clear</button>
+          <button class="notif-mark-read" title="${i18n.t('notif.markRead')}">${i18n.t('notif.markRead')}</button>
+          <button class="notif-clear" title="${i18n.t('notif.clear')}">${i18n.t('notif.clear')}</button>
         </div>
       </div>
       <div class="notif-panel-body"></div>
@@ -157,7 +159,7 @@ export class NotificationCenter {
   renderList() {
     const body = this.panel.querySelector('.notif-panel-body');
     if (this.notifications.length === 0) {
-      body.innerHTML = '<div class="notif-empty">No notifications</div>';
+      body.innerHTML = `<div class="notif-empty">${i18n.t('notif.empty')}</div>`;
       return;
     }
 
@@ -189,9 +191,9 @@ export class NotificationCenter {
 
   timeAgo(date) {
     const seconds = Math.floor((new Date() - date) / 1000);
-    if (seconds < 60) return 'just now';
-    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+    if (seconds < 60) return i18n.t('notif.justNow');
+    if (seconds < 3600) return i18n.t('notif.minsAgo', {n: Math.floor(seconds / 60)});
+    if (seconds < 86400) return i18n.t('notif.hoursAgo', {n: Math.floor(seconds / 3600)});
     return date.toLocaleDateString();
   }
 

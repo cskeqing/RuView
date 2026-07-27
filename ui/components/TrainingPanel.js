@@ -2,6 +2,7 @@
 // Dark-mode panel for training management, CSI recordings, and progress charts.
 
 import { trainingService } from '../services/training.service.js';
+import { i18n } from '../utils/i18n.js';
 
 const TP_STYLES = `
 .tp-panel{background:rgba(17,24,39,.9);border:1px solid rgba(56,68,89,.6);border-radius:8px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#e0e0e0;overflow:hidden}
@@ -117,7 +118,7 @@ export default class TrainingPanel {
       await trainingService.startRecording({ session_name: `rec_${Date.now()}`, label: 'pose' });
       this._set({ isRecording: true, loading: false });
       await this.refresh();
-    } catch (e) { this._set({ loading: false, error: `Recording failed: ${e.message}` }); }
+    } catch (e) { this._set({ loading: false, error: i18n.t('train.recordFailed', { msg: e.message }) }); }
   }
 
   async _stopRec() {
@@ -126,7 +127,7 @@ export default class TrainingPanel {
       await trainingService.stopRecording();
       this._set({ isRecording: false, loading: false });
       await this.refresh();
-    } catch (e) { this._set({ loading: false, error: `Stop recording failed: ${e.message}` }); }
+    } catch (e) { this._set({ loading: false, error: i18n.t('train.stopRecordFailed', { msg: e.message }) }); }
   }
 
   async _delRec(id) {
@@ -135,7 +136,7 @@ export default class TrainingPanel {
       await trainingService.deleteRecording(id);
       this.config.selectedRecordings = this.config.selectedRecordings.filter(r => r !== id);
       await this.refresh();
-    } catch (e) { this._set({ loading: false, error: `Delete failed: ${e.message}` }); }
+    } catch (e) { this._set({ loading: false, error: i18n.t('train.deleteFailed', { msg: e.message }) }); }
   }
 
   async _launchTraining(method, extraCfg = {}) {
@@ -159,7 +160,7 @@ export default class TrainingPanel {
       // the progress socket we opened optimistically and refresh so the button
       // reflects the real (possibly disabled) state instead of a silent no-op.
       trainingService.disconnectProgressStream();
-      this._set({ loading: false, error: `Training failed: ${e.message}` });
+      this._set({ loading: false, error: i18n.t('train.trainFailed', { msg: e.message }) });
       this.refresh();
     }
   }
@@ -167,7 +168,7 @@ export default class TrainingPanel {
   async _stopTraining() {
     this._set({ loading: true, error: null });
     try { await trainingService.stopTraining(); await this.refresh(); }
-    catch (e) { this._set({ loading: false, error: `Stop failed: ${e.message}` }); }
+    catch (e) { this._set({ loading: false, error: i18n.t('train.stopFailed', { msg: e.message }) }); }
   }
 
   _set(p) { Object.assign(this.state, p); this.render(); }
@@ -192,32 +193,32 @@ export default class TrainingPanel {
 
   _renderHeader() {
     const h = this._el('div', 'tp-header');
-    h.appendChild(this._el('span', 'tp-title', 'Training'));
+    h.appendChild(this._el('span', 'tp-title', i18n.t('train.title')));
     const ts = this.state.trainingStatus;
-    let cls = 'tp-badge tp-badge-idle', txt = 'Idle';
-    if (ts && ts.active) { cls = 'tp-badge tp-badge-active'; txt = 'Training'; }
-    else if (ts && !ts.active && this.progressData.losses.length > 0) { cls = 'tp-badge tp-badge-done'; txt = 'Completed'; }
+    let cls = 'tp-badge tp-badge-idle', txt = i18n.t('train.idle');
+    if (ts && ts.active) { cls = 'tp-badge tp-badge-active'; txt = i18n.t('train.training'); }
+    else if (ts && !ts.active && this.progressData.losses.length > 0) { cls = 'tp-badge tp-badge-done'; txt = i18n.t('train.completed'); }
     h.appendChild(this._el('span', cls, txt));
     return h;
   }
 
   _renderRecordings() {
     const s = this._el('div', 'tp-section');
-    s.appendChild(this._el('div', 'tp-section-title', 'CSI Recordings'));
+    s.appendChild(this._el('div', 'tp-section-title', i18n.t('train.recordings')));
     if (this.state.recordings.length === 0 && !this.state.loading) {
-      s.appendChild(this._el('div', 'tp-empty', 'Start recording CSI data to train a model'));
+      s.appendChild(this._el('div', 'tp-empty', i18n.t('train.emptyRecordings')));
     } else {
       this.state.recordings.forEach(rec => {
         const row = this._el('div', 'tp-rec-row');
         const info = this._el('div', 'tp-rec-info');
         info.appendChild(this._el('span', 'tp-rec-name', rec.name || rec.id));
         const parts = [];
-        if (rec.frame_count != null) parts.push(rec.frame_count + ' frames');
+        if (rec.frame_count != null) parts.push(rec.frame_count + i18n.t('train.frames'));
         if (rec.file_size_bytes != null) parts.push(this._fmtB(rec.file_size_bytes));
         if (rec.started_at && rec.ended_at) parts.push(Math.round((new Date(rec.ended_at) - new Date(rec.started_at)) / 1000) + 's');
         info.appendChild(this._el('span', 'tp-rec-meta', parts.join(' / ')));
         row.appendChild(info);
-        const del = this._btn('Delete', 'tp-btn tp-btn-muted', () => this._delRec(rec.id));
+        const del = this._btn(i18n.t('train.delete'), 'tp-btn tp-btn-muted', () => this._delRec(rec.id));
         del.disabled = this.state.loading;
         row.appendChild(del);
         s.appendChild(row);
@@ -225,10 +226,10 @@ export default class TrainingPanel {
     }
     const acts = this._el('div', 'tp-rec-actions');
     if (this.state.isRecording) {
-      const b = this._btn('Stop Recording', 'tp-btn tp-btn-danger', () => this._stopRec());
+      const b = this._btn(i18n.t('train.stopRecording'), 'tp-btn tp-btn-danger', () => this._stopRec());
       b.disabled = this.state.loading; acts.appendChild(b);
     } else {
-      const b = this._btn('Start Recording', 'tp-btn tp-btn-rec', () => this._startRec());
+      const b = this._btn(i18n.t('train.startRecording'), 'tp-btn tp-btn-rec', () => this._startRec());
       b.disabled = this.state.loading; acts.appendChild(b);
     }
     s.appendChild(acts);
@@ -238,15 +239,15 @@ export default class TrainingPanel {
   _renderConfig() {
     const s = this._el('div', 'tp-section');
     const hdr = this._el('div', 'tp-config-header');
-    hdr.appendChild(this._el('span', 'tp-section-title', 'Training Configuration'));
-    hdr.appendChild(this._btn(this.state.configOpen ? 'Collapse' : 'Expand', 'tp-btn tp-btn-muted',
+    hdr.appendChild(this._el('span', 'tp-section-title', i18n.t('train.config')));
+    hdr.appendChild(this._btn(this.state.configOpen ? i18n.t('train.collapse') : i18n.t('train.expand'), 'tp-btn tp-btn-muted',
       () => { this.state.configOpen = !this.state.configOpen; this.render(); }));
     s.appendChild(hdr);
     if (!this.state.configOpen) return s;
 
     const form = this._el('div', 'tp-config-form');
     if (this.state.recordings.length > 0) {
-      form.appendChild(this._el('label', 'tp-label', 'Datasets'));
+      form.appendChild(this._el('label', 'tp-label', i18n.t('train.datasets')));
       const dc = this._el('div', 'tp-ds-container');
       this.state.recordings.forEach(rec => {
         const lb = this._el('label', 'tp-ds-item');
@@ -271,12 +272,12 @@ export default class TrainingPanel {
       inp.addEventListener('change', () => fn(inp.value));
       r.appendChild(inp); return r;
     };
-    form.appendChild(ir('Epochs', 'number', this.config.epochs, v => { this.config.epochs = parseInt(v) || 100; }));
-    form.appendChild(ir('Batch Size', 'number', this.config.batch_size, v => { this.config.batch_size = parseInt(v) || 32; }));
-    form.appendChild(ir('Learning Rate', 'text', this.config.learning_rate, v => { this.config.learning_rate = parseFloat(v) || 3e-4; }));
-    form.appendChild(ir('Early Stop Patience', 'number', this.config.patience, v => { this.config.patience = parseInt(v) || 15; }));
-    form.appendChild(ir('Base Model (opt.)', 'text', this.config.base_model, v => { this.config.base_model = v; }));
-    form.appendChild(ir('LoRA Profile (opt.)', 'text', this.config.lora_profile_name, v => { this.config.lora_profile_name = v; }));
+    form.appendChild(ir(i18n.t('train.epochs'), 'number', this.config.epochs, v => { this.config.epochs = parseInt(v) || 100; }));
+    form.appendChild(ir(i18n.t('train.batchSize'), 'number', this.config.batch_size, v => { this.config.batch_size = parseInt(v) || 32; }));
+    form.appendChild(ir(i18n.t('train.learningRate'), 'text', this.config.learning_rate, v => { this.config.learning_rate = parseFloat(v) || 3e-4; }));
+    form.appendChild(ir(i18n.t('train.earlyStop'), 'number', this.config.patience, v => { this.config.patience = parseInt(v) || 15; }));
+    form.appendChild(ir(i18n.t('train.baseModel'), 'text', this.config.base_model, v => { this.config.base_model = v; }));
+    form.appendChild(ir(i18n.t('train.loraProfile'), 'text', this.config.lora_profile_name, v => { this.config.lora_profile_name = v; }));
     s.appendChild(form);
 
     // ADR-186 P5: if the server reports in-server training disabled
@@ -287,19 +288,19 @@ export default class TrainingPanel {
     const cli = (ts && ts.cli) || 'wifi-densepose train-room';
     if (disabled) {
       const note = this._el('div', 'tp-empty',
-        `In-server training is disabled on this build. Train from the CLI:  ${cli}`);
+        i18n.t('train.disabled', { cli }));
       s.appendChild(note);
     }
 
     const acts = this._el('div', 'tp-train-actions');
     const btns = [
-      this._btn('Start Training', 'tp-btn tp-btn-success', () => this._launchTraining('startTraining', { patience: this.config.patience, base_model: this.config.base_model || undefined })),
-      this._btn('Pretrain', 'tp-btn tp-btn-secondary', () => this._launchTraining('startPretraining')),
-      this._btn('LoRA', 'tp-btn tp-btn-secondary', () => this._launchTraining('startLoraTraining', { base_model: this.config.base_model || undefined, profile_name: this.config.lora_profile_name || 'default' }))
+      this._btn(i18n.t('train.start'), 'tp-btn tp-btn-success', () => this._launchTraining('startTraining', { patience: this.config.patience, base_model: this.config.base_model || undefined })),
+      this._btn(i18n.t('train.pretrain'), 'tp-btn tp-btn-secondary', () => this._launchTraining('startPretraining')),
+      this._btn(i18n.t('train.lora'), 'tp-btn tp-btn-secondary', () => this._launchTraining('startLoraTraining', { base_model: this.config.base_model || undefined, profile_name: this.config.lora_profile_name || 'default' }))
     ];
     btns.forEach(b => {
       b.disabled = this.state.loading || disabled;
-      if (disabled) b.title = `In-server training disabled — use: ${cli}`;
+      if (disabled) b.title = i18n.t('train.disabledTip', { cli });
       acts.appendChild(b);
     });
     s.appendChild(acts);
@@ -309,14 +310,14 @@ export default class TrainingPanel {
   _renderProgress() {
     const ts = this.state.trainingStatus || {};
     const s = this._el('div', 'tp-section');
-    s.appendChild(this._el('div', 'tp-section-title', 'Training Progress'));
+    s.appendChild(this._el('div', 'tp-section-title', i18n.t('train.progress')));
 
     const pct = ts.total_epochs ? Math.round((ts.epoch / ts.total_epochs) * 100) : 0;
     const bar = this._el('div', 'tp-progress-bar');
     const fill = this._el('div', 'tp-progress-fill');
     fill.style.width = pct + '%';
     bar.appendChild(fill); s.appendChild(bar);
-    s.appendChild(this._el('div', 'tp-progress-label', `Epoch ${ts.epoch ?? 0} / ${ts.total_epochs ?? '?'}  (${pct}%)`));
+    s.appendChild(this._el('div', 'tp-progress-label', i18n.t('train.epoch', { current: ts.epoch ?? 0, total: ts.total_epochs ?? '?', pct })));
 
     const cr = this._el('div', 'tp-chart-row');
     const lc = document.createElement('canvas'); lc.id = 'tp-loss-chart'; lc.width = 260; lc.height = 140;
@@ -325,17 +326,17 @@ export default class TrainingPanel {
 
     const g = this._el('div', 'tp-metrics-grid');
     const mc = (l, v) => { const c = this._el('div', 'tp-metric-cell'); c.appendChild(this._el('div', 'tp-metric-label', l)); c.appendChild(this._el('div', 'tp-metric-value', v)); return c; };
-    g.appendChild(mc('Loss', ts.train_loss != null ? ts.train_loss.toFixed(4) : '--'));
-    g.appendChild(mc('PCK', ts.val_pck != null ? (ts.val_pck * 100).toFixed(1) + '%' : '--'));
-    g.appendChild(mc('OKS', ts.val_oks != null ? ts.val_oks.toFixed(3) : '--'));
-    g.appendChild(mc('LR', ts.lr != null ? ts.lr.toExponential(1) : '--'));
-    g.appendChild(mc('Best PCK', ts.best_pck != null ? (ts.best_pck * 100).toFixed(1) + '% (e' + (ts.best_epoch ?? '?') + ')' : '--'));
-    g.appendChild(mc('Patience', ts.patience_remaining != null ? String(ts.patience_remaining) : '--'));
-    g.appendChild(mc('ETA', ts.eta_secs != null ? this._fmtEta(ts.eta_secs) : '--'));
-    g.appendChild(mc('Phase', ts.phase || '--'));
+    g.appendChild(mc(i18n.t('train.loss'), ts.train_loss != null ? ts.train_loss.toFixed(4) : '--'));
+    g.appendChild(mc(i18n.t('train.pck'), ts.val_pck != null ? (ts.val_pck * 100).toFixed(1) + '%' : '--'));
+    g.appendChild(mc(i18n.t('train.oks'), ts.val_oks != null ? ts.val_oks.toFixed(3) : '--'));
+    g.appendChild(mc(i18n.t('train.lr'), ts.lr != null ? ts.lr.toExponential(1) : '--'));
+    g.appendChild(mc(i18n.t('train.bestPck'), ts.best_pck != null ? (ts.best_pck * 100).toFixed(1) + '% (e' + (ts.best_epoch ?? '?') + ')' : '--'));
+    g.appendChild(mc(i18n.t('train.patience'), ts.patience_remaining != null ? String(ts.patience_remaining) : '--'));
+    g.appendChild(mc(i18n.t('train.eta'), ts.eta_secs != null ? this._fmtEta(ts.eta_secs) : '--'));
+    g.appendChild(mc(i18n.t('train.phase'), ts.phase || '--'));
     s.appendChild(g);
 
-    const stop = this._btn('Stop Training', 'tp-btn tp-btn-danger', () => this._stopTraining());
+    const stop = this._btn(i18n.t('train.stop'), 'tp-btn tp-btn-danger', () => this._stopTraining());
     stop.disabled = this.state.loading; stop.style.marginTop = '10px'; s.appendChild(stop);
     return s;
   }
@@ -343,17 +344,17 @@ export default class TrainingPanel {
   _renderComplete() {
     const ts = this.state.trainingStatus || {};
     const s = this._el('div', 'tp-section');
-    s.appendChild(this._el('div', 'tp-section-title', 'Training Complete'));
+    s.appendChild(this._el('div', 'tp-section-title', i18n.t('train.complete')));
     const g = this._el('div', 'tp-metrics-grid');
     const mc = (l, v) => { const c = this._el('div', 'tp-metric-cell'); c.appendChild(this._el('div', 'tp-metric-label', l)); c.appendChild(this._el('div', 'tp-metric-value', v)); return c; };
     const losses = this.progressData.losses;
-    g.appendChild(mc('Final Loss', losses.length > 0 ? losses[losses.length - 1].toFixed(4) : '--'));
-    g.appendChild(mc('Best PCK', ts.best_pck != null ? (ts.best_pck * 100).toFixed(1) + '%' : '--'));
-    g.appendChild(mc('Best Epoch', ts.best_epoch != null ? String(ts.best_epoch) : '--'));
-    g.appendChild(mc('Total Epochs', String(losses.length)));
+    g.appendChild(mc(i18n.t('train.finalLoss'), losses.length > 0 ? losses[losses.length - 1].toFixed(4) : '--'));
+    g.appendChild(mc(i18n.t('train.bestPck'), ts.best_pck != null ? (ts.best_pck * 100).toFixed(1) + '%' : '--'));
+    g.appendChild(mc(i18n.t('train.bestEpoch'), ts.best_epoch != null ? String(ts.best_epoch) : '--'));
+    g.appendChild(mc(i18n.t('train.totalEpochs'), String(losses.length)));
     s.appendChild(g);
     const acts = this._el('div', 'tp-train-actions');
-    acts.appendChild(this._btn('New Training', 'tp-btn tp-btn-secondary', () => {
+    acts.appendChild(this._btn(i18n.t('train.newTraining'), 'tp-btn tp-btn-secondary', () => {
       this.progressData = { losses: [], pcks: [] }; this._set({ trainingStatus: null });
     }));
     s.appendChild(acts);
@@ -363,8 +364,8 @@ export default class TrainingPanel {
   // --- Chart drawing ---
 
   _drawCharts() {
-    this._drawChart('tp-loss-chart', this.progressData.losses, { color: '#ff6b6b', label: 'Loss', yMin: 0, yMax: null });
-    this._drawChart('tp-pck-chart', this.progressData.pcks, { color: '#51cf66', label: 'PCK', yMin: 0, yMax: 1 });
+    this._drawChart('tp-loss-chart', this.progressData.losses, { color: '#ff6b6b', label: i18n.t('train.loss'), yMin: 0, yMax: null });
+    this._drawChart('tp-pck-chart', this.progressData.pcks, { color: '#51cf66', label: i18n.t('train.pck'), yMin: 0, yMax: 1 });
   }
 
   _drawChart(id, data, opts) {
@@ -374,7 +375,7 @@ export default class TrainingPanel {
     const p = { t: 20, r: 10, b: 24, l: 44 };
     ctx.fillStyle = '#0d1117'; ctx.fillRect(0, 0, w, h);
     ctx.fillStyle = '#8899aa'; ctx.font = '11px -apple-system,sans-serif'; ctx.fillText(opts.label, p.l, 14);
-    if (!data.length) { ctx.fillStyle = '#6b7a8d'; ctx.fillText('No data', w / 2 - 20, h / 2); return; }
+    if (!data.length) { ctx.fillStyle = '#6b7a8d'; ctx.fillText(i18n.t('train.noData'), w / 2 - 20, h / 2); return; }
     const pw = w - p.l - p.r, ph = h - p.t - p.b;
     let yMin = opts.yMin ?? Math.min(...data), yMax = opts.yMax ?? Math.max(...data);
     if (yMax === yMin) yMax = yMin + 1;

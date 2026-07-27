@@ -60,7 +60,7 @@ class WiFiDensePoseApp {
       
     } catch (error) {
       console.error('Failed to initialize application:', error);
-      this.showGlobalError('Failed to initialize application. Please refresh the page.');
+      this.showGlobalError(i18n.t('app.initFailed'));
     }
   }
 
@@ -85,17 +85,17 @@ class WiFiDensePoseApp {
       mockServer.start();
       
       // Show notification to user
-      this.showBackendStatus('Mock server active - testing mode', 'warning');
+      this.showBackendStatus(i18n.t('app.mockActive'), 'warning');
     } else {
       console.log('🔌 Connecting to backend...');
 
       try {
         const health = await healthService.checkLiveness();
         console.log('✅ Backend responding:', health);
-        this.showBackendStatus('Connected to Rust sensing server', 'success');
+        this.showBackendStatus(i18n.t('app.connected'), 'success');
       } catch (error) {
         console.warn('⚠️ Backend not available:', error.message);
-        this.showBackendStatus('Backend unavailable — start sensing-server', 'warning');
+        this.showBackendStatus(i18n.t('app.backendUnavailable'), 'warning');
       }
 
       // Start the sensing WebSocket service early so the dashboard and
@@ -393,14 +393,14 @@ class WiFiDensePoseApp {
     window.addEventListener('error', (event) => {
       if (event.error) {
         console.error('Global error:', event.error);
-        this.showGlobalError('An unexpected error occurred');
+        this.showGlobalError(i18n.t('app.unexpectedError'));
       }
     });
 
     window.addEventListener('unhandledrejection', (event) => {
       if (event.reason) {
         console.error('Unhandled promise rejection:', event.reason);
-        this.showGlobalError('An unexpected error occurred');
+        this.showGlobalError(i18n.t('app.unexpectedError'));
       }
     });
   }
