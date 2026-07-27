@@ -2,6 +2,7 @@
 // Shows WebSocket and API connection state with reconnect button
 
 import { sensingService } from '../services/sensing.service.js';
+import { i18n } from './i18n.js';
 
 export class ConnectionStatus {
   constructor() {
@@ -21,14 +22,14 @@ export class ConnectionStatus {
     this.widget.setAttribute('aria-live', 'polite');
     this.widget.innerHTML = `
       <span class="conn-status-dot"></span>
-      <span class="conn-status-label">Connecting</span>
-      <button class="conn-status-reconnect" aria-label="Reconnect" title="Reconnect" style="display:none">
+      <span class="conn-status-label">${i18n.t('conn.connecting')}</span>
+      <button class="conn-status-reconnect" aria-label="${i18n.t('conn.reconnect')}" title="${i18n.t('conn.reconnect')}" style="display:none">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
       </button>
     `;
 
     this.widget.querySelector('.conn-status-reconnect').addEventListener('click', () => {
-      this.setStatus('reconnecting', 'Reconnecting...');
+      this.setStatus('reconnecting', i18n.t('conn.reconnecting'));
       sensingService.reconnect?.();
     });
 
@@ -52,16 +53,16 @@ export class ConnectionStatus {
     const source = sensingService.dataSource;
 
     if (state === 'connected' || state === 'streaming') {
-      const label = source === 'live' ? 'Live' :
-                    source === 'server-simulated' ? 'Simulated' :
-                    'Connected';
+      const label = source === 'live' ? i18n.t('conn.live') :
+                    source === 'server-simulated' ? i18n.t('conn.simulated') :
+                    i18n.t('conn.connected');
       this.setStatus('connected', label);
     } else if (state === 'connecting' || state === 'reconnecting') {
-      this.setStatus('reconnecting', 'Connecting...');
+      this.setStatus('reconnecting', i18n.t('conn.connecting'));
     } else if (state === 'error') {
-      this.setStatus('error', 'Error');
+      this.setStatus('error', i18n.t('conn.error'));
     } else {
-      this.setStatus('disconnected', 'Offline');
+      this.setStatus('disconnected', i18n.t('conn.offline'));
     }
   }
 

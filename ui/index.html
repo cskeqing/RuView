@@ -29,16 +29,16 @@
 
         <!-- Navigation -->
         <nav class="nav-tabs" role="tablist" aria-label="Main navigation">
-            <button class="nav-tab active" data-tab="dashboard" role="tab" aria-selected="true" aria-controls="dashboard">Dashboard</button>
-            <button class="nav-tab" data-tab="hardware" role="tab" aria-selected="false" aria-controls="hardware">Hardware</button>
-            <button class="nav-tab" data-tab="demo" role="tab" aria-selected="false" aria-controls="demo">Live Demo</button>
-            <button class="nav-tab" data-tab="architecture" role="tab" aria-selected="false" aria-controls="architecture">Architecture</button>
-            <button class="nav-tab" data-tab="performance" role="tab" aria-selected="false" aria-controls="performance">Performance</button>
-            <button class="nav-tab" data-tab="applications" role="tab" aria-selected="false" aria-controls="applications">Applications</button>
-            <button class="nav-tab" data-tab="sensing" role="tab" aria-selected="false" aria-controls="sensing">Sensing</button>
-            <button class="nav-tab" data-tab="training" role="tab" aria-selected="false" aria-controls="training">Training</button>
-            <a href="pose-fusion.html" class="nav-tab" style="text-decoration:none">Pose Fusion</a>
-            <a href="observatory.html" class="nav-tab" style="text-decoration:none">Observatory</a>
+            <button class="nav-tab active" data-tab="dashboard" role="tab" aria-selected="true" aria-controls="dashboard" data-i18n="nav.dashboard">Dashboard</button>
+            <button class="nav-tab" data-tab="hardware" role="tab" aria-selected="false" aria-controls="hardware" data-i18n="nav.hardware">Hardware</button>
+            <button class="nav-tab" data-tab="demo" role="tab" aria-selected="false" aria-controls="demo" data-i18n="nav.demo">Live Demo</button>
+            <button class="nav-tab" data-tab="architecture" role="tab" aria-selected="false" aria-controls="architecture" data-i18n="nav.architecture">Architecture</button>
+            <button class="nav-tab" data-tab="performance" role="tab" aria-selected="false" aria-controls="performance" data-i18n="nav.performance">Performance</button>
+            <button class="nav-tab" data-tab="applications" role="tab" aria-selected="false" aria-controls="applications" data-i18n="nav.applications">Applications</button>
+            <button class="nav-tab" data-tab="sensing" role="tab" aria-selected="false" aria-controls="sensing" data-i18n="nav.sensing">Sensing</button>
+            <button class="nav-tab" data-tab="training" role="tab" aria-selected="false" aria-controls="training" data-i18n="nav.training">Training</button>
+            <a href="pose-fusion.html" class="nav-tab" style="text-decoration:none" data-i18n="nav.poseFusion">Pose Fusion</a>
+            <a href="observatory.html" class="nav-tab" style="text-decoration:none" data-i18n="nav.observatory">Observatory</a>
         </nav>
 
         <!-- Dashboard Tab -->
@@ -59,27 +59,27 @@
                     <h3 data-i18n="dashboard.status">System Status</h3>
                     <div class="status-grid">
                         <div class="component-status" data-component="api">
-                            <span class="component-name">API Server</span>
+                            <span class="component-name" data-i18n="status.apiServer">API Server</span>
                             <span class="status-text">-</span>
                             <span class="status-message"></span>
                         </div>
                         <div class="component-status" data-component="hardware">
-                            <span class="component-name">Hardware</span>
+                            <span class="component-name" data-i18n="status.hardware">Hardware</span>
                             <span class="status-text">-</span>
                             <span class="status-message"></span>
                         </div>
                         <div class="component-status" data-component="inference">
-                            <span class="component-name">Inference</span>
+                            <span class="component-name" data-i18n="status.inference">Inference</span>
                             <span class="status-text">-</span>
                             <span class="status-message"></span>
                         </div>
                         <div class="component-status" data-component="streaming">
-                            <span class="component-name">Streaming</span>
+                            <span class="component-name" data-i18n="status.streaming">Streaming</span>
                             <span class="status-text">-</span>
                             <span class="status-message"></span>
                         </div>
                         <div class="component-status" data-component="datasource" id="dashboard-datasource">
-                            <span class="component-name">Data Source</span>
+                            <span class="component-name" data-i18n="status.dataSource">Data Source</span>
                             <span class="status-text">-</span>
                             <span class="status-message"></span>
                         </div>
@@ -125,21 +125,21 @@
                     <h3 data-i18n="dashboard.liveStats">Live Statistics</h3>
                     <div class="stats-grid">
                         <div class="stat-item">
-                            <span class="stat-label">Active Persons</span>
+                            <span class="stat-label" data-i18n="dashboard.activePersons">Active Persons</span>
                             <span class="person-count">0</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-label">Avg Confidence</span>
+                            <span class="stat-label" data-i18n="dashboard.avgConfidence">Avg Confidence</span>
                             <span class="avg-confidence">0%</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-label">Total Detections</span>
+                            <span class="stat-label" data-i18n="dashboard.totalDetections">Total Detections</span>
                             <span class="detection-count">0</span>
                         </div>
                     </div>
                     
                     <div class="zones-panel">
-                        <h4>Zone Occupancy</h4>
+                        <h4 data-i18n="dashboard.zoneOccupancy">Zone Occupancy</h4>
                         <div class="zones-summary"></div>
                     </div>
                 </div>
@@ -147,42 +147,42 @@
                 <div class="key-benefits">
                     <div class="benefit-card">
                         <div class="benefit-icon">🏠</div>
-                        <h3>Through Walls</h3>
-                        <p>Works through solid barriers with no line of sight required</p>
+                        <h3 data-i18n="benefit.throughWalls">Through Walls</h3>
+                        <p data-i18n="benefit.throughWallsDesc">Works through solid barriers with no line of sight required</p>
                     </div>
                     <div class="benefit-card">
                         <div class="benefit-icon">🔒</div>
-                        <h3>Privacy-Preserving</h3>
-                        <p>No cameras or visual recording - just WiFi signal analysis</p>
+                        <h3 data-i18n="benefit.privacy">Privacy-Preserving</h3>
+                        <p data-i18n="benefit.privacyDesc">No cameras or visual recording - just WiFi signal analysis</p>
                     </div>
                     <div class="benefit-card">
                         <div class="benefit-icon">⚡</div>
-                        <h3>Real-Time</h3>
-                        <p>Maps 24 body regions in real-time at 100Hz sampling rate</p>
+                        <h3 data-i18n="benefit.realtime">Real-Time</h3>
+                        <p data-i18n="benefit.realtimeDesc">Maps 24 body regions in real-time at 100Hz sampling rate</p>
                     </div>
                     <div class="benefit-card">
                         <div class="benefit-icon">💰</div>
-                        <h3>Low Cost</h3>
-                        <p>Built using $30 commercial WiFi hardware</p>
+                        <h3 data-i18n="benefit.lowCost">Low Cost</h3>
+                        <p data-i18n="benefit.lowCostDesc">Built using $30 commercial WiFi hardware</p>
                     </div>
                 </div>
 
                 <div class="system-stats">
                     <div class="stat" data-stat="body-regions">
                         <span class="stat-value">24</span>
-                        <span class="stat-label">Body Regions</span>
+                        <span class="stat-label" data-i18n="stat.bodyRegions">Body Regions</span>
                     </div>
                     <div class="stat" data-stat="sampling-rate">
                         <span class="stat-value">100Hz</span>
-                        <span class="stat-label">Sampling Rate</span>
+                        <span class="stat-label" data-i18n="stat.samplingRate">Sampling Rate</span>
                     </div>
                     <div class="stat" data-stat="accuracy">
                         <span class="stat-value">87.2%</span>
-                        <span class="stat-label">Accuracy (AP@50)</span>
+                        <span class="stat-label" data-i18n="stat.accuracy">Accuracy (AP@50)</span>
                     </div>
                     <div class="stat" data-stat="hardware-cost">
                         <span class="stat-value">$30</span>
-                        <span class="stat-label">Hardware Cost</span>
+                        <span class="stat-label" data-i18n="stat.hardwareCost">Hardware Cost</span>
                     </div>
                 </div>
             </div>

@@ -5,6 +5,7 @@ import { poseService } from '../services/pose.service.js';
 import { streamService } from '../services/stream.service.js';
 import { wsService } from '../services/websocket.service.js';
 import { sensingService } from '../services/sensing.service.js';
+import { i18n } from '../utils/i18n.js';
 
 // Optional services - loaded lazily in init() to avoid blocking module graph
 let modelService = null;
@@ -148,26 +149,26 @@ export class LiveDemoTab {
         <div class="live-demo-enhanced">
           <!-- Data source banner — prominent indicator for live vs simulated -->
           <div id="demo-source-banner" class="demo-source-banner demo-source-unknown" role="status" aria-live="polite">
-            Detecting data source...
+            ${i18n.t('demo.detectingSource')}
           </div>
 
           <div class="demo-header">
             <div class="demo-title">
-              <h2>Live Human Pose Detection</h2>
+              <h2>${i18n.t('demo.livePoseTitle')}</h2>
               <div class="demo-status">
                 <span class="status-indicator" id="demo-status-indicator"></span>
-                <span class="status-text" id="demo-status-text">Ready</span>
+                <span class="status-text" id="demo-status-text">${i18n.t('demo.ready')}</span>
               </div>
             </div>
             <div class="demo-controls">
-              <button class="btn btn--primary" id="start-enhanced-demo">Start Detection</button>
-              <button class="btn btn--secondary" id="stop-enhanced-demo" disabled>Stop Detection</button>
-              <button class="btn btn--accent" id="run-offline-demo">Demo</button>
-              <button class="btn btn--primary" id="toggle-debug">Debug Mode</button>
+              <button class="btn btn--primary" id="start-enhanced-demo">${i18n.t('demo.startDetection')}</button>
+              <button class="btn btn--secondary" id="stop-enhanced-demo" disabled>${i18n.t('demo.stopDetection')}</button>
+              <button class="btn btn--accent" id="run-offline-demo">${i18n.t('demo.demoBtn')}</button>
+              <button class="btn btn--primary" id="toggle-debug">${i18n.t('demo.debugMode')}</button>
               <select class="zone-select" id="zone-selector">
-                <option value="zone_1">Zone 1</option>
-                <option value="zone_2">Zone 2</option>
-                <option value="zone_3">Zone 3</option>
+                <option value="zone_1">${i18n.t('demo.zone')} 1</option>
+                <option value="zone_2">${i18n.t('demo.zone')} 2</option>
+                <option value="zone_3">${i18n.t('demo.zone')} 3</option>
               </select>
             </div>
           </div>
@@ -179,45 +180,45 @@ export class LiveDemoTab {
             
             <div class="demo-sidebar">
               <div class="metrics-panel">
-                <h4>Performance Metrics</h4>
+                <h4>${i18n.t('demo.perfMetrics')}</h4>
                 <div class="metric">
-                  <label>Connection Status:</label>
-                  <span id="connection-status">Disconnected</span>
+                  <label>${i18n.t('demo.connStatus')}</label>
+                  <span id="connection-status">${i18n.t('conn.disconnected')}</span>
                 </div>
                 <div class="metric">
-                  <label>Frames Processed:</label>
+                  <label>${i18n.t('demo.framesProcessed')}</label>
                   <span id="frame-count">0</span>
                 </div>
                 <div class="metric">
-                  <label>Uptime:</label>
+                  <label>${i18n.t('demo.uptime')}</label>
                   <span id="uptime">0s</span>
                 </div>
                 <div class="metric">
-                  <label>Errors:</label>
+                  <label>${i18n.t('demo.errors')}</label>
                   <span id="error-count">0</span>
                 </div>
                 <div class="metric">
-                  <label>Last Update:</label>
-                  <span id="last-update">Never</span>
+                  <label>${i18n.t('demo.lastUpdate')}</label>
+                  <span id="last-update">${i18n.t('misc.never')}</span>
                 </div>
               </div>
               
               <div class="pose-source-panel">
-                <h4>Estimation Mode</h4>
+                <h4>${i18n.t('demo.estimationMode')}</h4>
                 <div class="pose-source-indicator" id="pose-source-indicator">
-                  <span class="pose-source-badge pose-source-unknown" id="pose-source-badge">Unknown</span>
+                  <span class="pose-source-badge pose-source-unknown" id="pose-source-badge">${i18n.t('misc.unknown')}</span>
                   <p class="pose-source-description" id="pose-source-description">
-                    Waiting for first frame...
+                    ${i18n.t('demo.waitingFrame')}
                   </p>
                 </div>
               </div>
 
               <div class="model-control-panel" id="model-control-panel">
-                <h4>Model Control</h4>
+                <h4>${i18n.t('demo.modelControl')}</h4>
                 <div class="setting-row-ld">
-                  <label class="ld-label">Model:</label>
+                  <label class="ld-label">${i18n.t('demo.model')}</label>
                   <select class="ld-select" id="model-selector">
-                    <option value="">Signal-Derived (no model)</option>
+                    <option value="">${i18n.t('demo.signalDerived')}</option>
                   </select>
                 </div>
                 <div class="model-info-row" id="model-active-info" style="display: none;">
@@ -225,90 +226,88 @@ export class LiveDemoTab {
                   <span class="model-pck-badge" id="model-active-pck"></span>
                 </div>
                 <div class="setting-row-ld" id="lora-profile-row" style="display: none;">
-                  <label class="ld-label">LoRA Profile:</label>
+                  <label class="ld-label">${i18n.t('demo.loraProfile')}</label>
                   <select class="ld-select" id="lora-profile-selector">
-                    <option value="">None</option>
+                    <option value="">${i18n.t('misc.none')}</option>
                   </select>
                 </div>
                 <div class="model-actions">
-                  <button class="btn-ld btn-ld-accent" id="load-model-btn">Load Model</button>
-                  <button class="btn-ld btn-ld-muted" id="unload-model-btn" disabled>Unload</button>
+                  <button class="btn-ld btn-ld-accent" id="load-model-btn">${i18n.t('demo.loadModel')}</button>
+                  <button class="btn-ld btn-ld-muted" id="unload-model-btn" disabled>${i18n.t('demo.unload')}</button>
                 </div>
-                <div class="model-status-text" id="model-status-text">No model loaded</div>
+                <div class="model-status-text" id="model-status-text">${i18n.t('demo.noModelLoaded')}</div>
               </div>
 
               <div class="split-view-panel">
                 <div class="setting-row-ld">
-                  <label class="ld-label">Compare: Signal vs Model</label>
-                  <button class="btn-ld btn-ld-toggle" id="split-view-toggle" disabled>Off</button>
+                  <label class="ld-label">${i18n.t('demo.compare')}</label>
+                  <button class="btn-ld btn-ld-toggle" id="split-view-toggle" disabled>${i18n.t('misc.off')}</button>
                 </div>
               </div>
 
               <div class="training-quick-panel" id="training-quick-panel">
-                <h4>Training</h4>
+                <h4>${i18n.t('demo.training')}</h4>
                 <div class="training-status-row">
-                  <span class="training-status-badge" id="training-status-badge">Idle</span>
+                  <span class="training-status-badge" id="training-status-badge">${i18n.t('misc.idle')}</span>
                 </div>
                 <div class="training-actions">
-                  <button class="btn-ld btn-ld-accent" id="open-training-panel-btn">Open Training Panel</button>
-                  <button class="btn-ld btn-ld-muted" id="quick-record-btn">Record 60s</button>
+                  <button class="btn-ld btn-ld-accent" id="open-training-panel-btn">${i18n.t('demo.openTraining')}</button>
+                  <button class="btn-ld btn-ld-muted" id="quick-record-btn">${i18n.t('demo.record60')}</button>
                 </div>
               </div>
 
               <div class="setup-guide-panel">
-                <h4>Setup Guide</h4>
+                <h4>${i18n.t('demo.setupGuide')}</h4>
                 <div class="setup-levels">
                   <div class="setup-level">
                     <span class="setup-level-icon">1x</span>
                     <div class="setup-level-info">
-                      <strong>1 ESP32 + 1 AP</strong>
-                      <p>Presence, breathing, gross motion</p>
+                      <strong>${i18n.t('demo.setup1')}</strong>
+                      <p>${i18n.t('demo.setup1Desc')}</p>
                     </div>
                   </div>
                   <div class="setup-level">
                     <span class="setup-level-icon">3x</span>
                     <div class="setup-level-info">
-                      <strong>2-3 ESP32s</strong>
-                      <p>Body localization, motion direction</p>
+                      <strong>${i18n.t('demo.setup2')}</strong>
+                      <p>${i18n.t('demo.setup2Desc')}</p>
                     </div>
                   </div>
                   <div class="setup-level">
                     <span class="setup-level-icon">4x+</span>
                     <div class="setup-level-info">
-                      <strong>4+ ESP32s + trained model</strong>
-                      <p>Individual limb tracking, full pose</p>
+                      <strong>${i18n.t('demo.setup3')}</strong>
+                      <p>${i18n.t('demo.setup3Desc')}</p>
                     </div>
                   </div>
                 </div>
                 <p class="setup-note">
-                  Signal-Derived mode uses aggregate CSI features.
-                  For per-limb tracking, load a trained <code>.rvf</code> model
-                  with <code>--model path.rvf</code> and use 4+ sensors.
+                  ${i18n.t('demo.setupNote')}
                 </p>
               </div>
 
               <div class="health-panel">
-                <h4>System Health</h4>
+                <h4>${i18n.t('demo.systemHealth')}</h4>
                 <div class="health-check">
-                  <label>API Health:</label>
-                  <span id="api-health">Unknown</span>
+                  <label>${i18n.t('demo.apiHealth')}</label>
+                  <span id="api-health">${i18n.t('misc.unknown')}</span>
                 </div>
                 <div class="health-check">
-                  <label>WebSocket:</label>
-                  <span id="websocket-health">Unknown</span>
+                  <label>${i18n.t('demo.wsHealth')}</label>
+                  <span id="websocket-health">${i18n.t('misc.unknown')}</span>
                 </div>
                 <div class="health-check">
-                  <label>Pose Service:</label>
-                  <span id="pose-service-health">Unknown</span>
+                  <label>${i18n.t('demo.poseService')}</label>
+                  <span id="pose-service-health">${i18n.t('misc.unknown')}</span>
                 </div>
               </div>
               
               <div class="debug-panel" id="debug-panel" style="display: none;">
-                <h4>Debug Information</h4>
+                <h4>${i18n.t('demo.debugInfo')}</h4>
                 <div class="debug-actions">
-                  <button class="btn btn-sm" id="force-reconnect">Force Reconnect</button>
-                  <button class="btn btn-sm" id="clear-errors">Clear Errors</button>
-                  <button class="btn btn-sm" id="export-logs">Export Logs</button>
+                  <button class="btn btn-sm" id="force-reconnect">${i18n.t('demo.forceReconnect')}</button>
+                  <button class="btn btn-sm" id="clear-errors">${i18n.t('demo.clearErrors')}</button>
+                  <button class="btn btn-sm" id="export-logs">${i18n.t('demo.exportLogs')}</button>
                 </div>
                 <div class="debug-info">
                   <textarea id="debug-output" readonly rows="8" cols="30"></textarea>
@@ -1207,7 +1206,7 @@ export class LiveDemoTab {
     }
     
     if (debugBtn) {
-      debugBtn.textContent = this.state.debugMode ? 'Hide Debug' : 'Debug Mode';
+      debugBtn.textContent = this.state.debugMode ? i18n.t('demo.hideDebug') : i18n.t('demo.debugMode');
       debugBtn.classList.toggle('active', this.state.debugMode);
     }
     
@@ -1313,13 +1312,13 @@ export class LiveDemoTab {
 
   getStatusText() {
     if (!this.state.isActive) {
-      return this.state.connectionState === 'error' ? 'Error' : 'Ready';
+      return this.state.connectionState === 'error' ? i18n.t('conn.error') : i18n.t('demo.ready');
     }
     const ds = sensingService.dataSource;
-    if (ds === 'live') return 'Active \u2014 ESP32 Live';
-    if (ds === 'server-simulated') return 'Active \u2014 Simulated Data';
-    if (ds === 'simulated') return 'Active \u2014 Offline Simulation';
-    return 'Connecting...';
+    if (ds === 'live') return i18n.t('demo.statusActiveEsp32');
+    if (ds === 'server-simulated') return i18n.t('demo.statusActiveSim');
+    if (ds === 'simulated') return i18n.t('demo.statusActiveOffline');
+    return i18n.t('demo.statusConnecting');
   }
 
   /** Update the prominent data-source banner at the top of Live Demo. */
@@ -1328,10 +1327,10 @@ export class LiveDemoTab {
     if (!banner) return;
     const ds = sensingService.dataSource;
     const config = {
-      'live':             { text: 'LIVE \u2014 ESP32 Hardware Connected',           cls: 'demo-source-live' },
-      'server-simulated': { text: 'SIMULATED DATA \u2014 No Hardware Detected',     cls: 'demo-source-sim' },
-      'reconnecting':     { text: 'RECONNECTING TO SERVER...',                      cls: 'demo-source-reconnecting' },
-      'simulated':        { text: 'OFFLINE \u2014 Server Unreachable, Local Sim',   cls: 'demo-source-offline' },
+      'live':             { text: i18n.t('demo.bannerLive'),           cls: 'demo-source-live' },
+      'server-simulated': { text: i18n.t('demo.bannerSim'),            cls: 'demo-source-sim' },
+      'reconnecting':     { text: i18n.t('demo.bannerReconnecting'),   cls: 'demo-source-reconnecting' },
+      'simulated':        { text: i18n.t('demo.bannerOffline'),        cls: 'demo-source-offline' },
     };
     const cfg = config[ds] || config['reconnecting'];
     banner.textContent = cfg.text;
@@ -1368,10 +1367,10 @@ export class LiveDemoTab {
     if (elements.connectionStatus) {
       const ds = sensingService.dataSource;
       const dsLabels = {
-        'live':              'Connected \u2014 ESP32',
-        'server-simulated':  'Connected \u2014 Simulated',
-        'reconnecting':      'Reconnecting...',
-        'simulated':         'Offline \u2014 Simulated',
+        'live':              i18n.t('demo.connEsp32'),
+        'server-simulated':  i18n.t('demo.connSim'),
+        'reconnecting':      i18n.t('demo.connReconnecting'),
+        'simulated':         i18n.t('demo.connOffline'),
       };
       const label = dsLabels[ds] || this.state.connectionState;
       elements.connectionStatus.textContent = label;
@@ -1399,7 +1398,7 @@ export class LiveDemoTab {
 
     if (elements.lastUpdate) {
       const lastUpdate = this.metrics.lastUpdate ? 
-        new Date(this.metrics.lastUpdate).toLocaleTimeString() : 'Never';
+        new Date(this.metrics.lastUpdate).toLocaleTimeString() : i18n.t('misc.never');
       elements.lastUpdate.textContent = lastUpdate;
     }
   }
@@ -1414,20 +1413,16 @@ export class LiveDemoTab {
 
     if (source === 'model_inference') {
       badge.className = 'pose-source-badge pose-source-model';
-      badge.textContent = 'Model Inference';
-      description.textContent =
-        'Pose is estimated by a trained neural network ' +
-        'loaded from an RVF container.';
+      badge.textContent = i18n.t('demo.modelInference');
+      description.textContent = i18n.t('demo.modelInferenceDesc');
     } else if (source === 'signal_derived') {
       badge.className = 'pose-source-badge pose-source-signal';
-      badge.textContent = 'Signal-Derived';
-      description.textContent =
-        'Keypoints are derived from live CSI signal features ' +
-        '(motion power, breathing rate, variance).';
+      badge.textContent = i18n.t('demo.signalDerivedBadge');
+      description.textContent = i18n.t('demo.signalDerivedDesc');
     } else {
       badge.className = 'pose-source-badge pose-source-unknown';
-      badge.textContent = 'Unknown';
-      description.textContent = 'Waiting for first frame...';
+      badge.textContent = i18n.t('misc.unknown');
+      description.textContent = i18n.t('demo.waitingFrame');
     }
   }
 
@@ -1462,7 +1457,7 @@ export class LiveDemoTab {
   updateHealthDisplay(elementId, isHealthy) {
     const element = this.container.querySelector(`#${elementId}`);
     if (element) {
-      element.textContent = isHealthy ? 'Good' : 'Poor';
+      element.textContent = isHealthy ? i18n.t('misc.good') : i18n.t('misc.poor');
       element.className = isHealthy ? 'health-good' : 'health-poor';
     }
   }
@@ -1521,7 +1516,7 @@ export class LiveDemoTab {
     const selector = this.container.querySelector('#model-selector');
     if (!selector) return;
     // Keep the first "Signal-Derived" option
-    selector.innerHTML = '<option value="">Signal-Derived (no model)</option>';
+    selector.innerHTML = `<option value="">${i18n.t('demo.signalDerived')}</option>`;
     this.modelState.models.forEach(model => {
       const opt = document.createElement('option');
       opt.value = model.id || model.model_id || model.name;
@@ -1538,12 +1533,12 @@ export class LiveDemoTab {
     const selector = this.container.querySelector('#model-selector');
     const modelId = selector?.value;
     if (!modelId) {
-      this.setModelStatus('Select a model first');
+      this.setModelStatus(i18n.t('demo.selectModelFirst'));
       return;
     }
     try {
       this.modelState.loading = true;
-      this.setModelStatus('Loading...');
+      this.setModelStatus(i18n.t('demo.loadingModel'));
       const loadBtn = this.container.querySelector('#load-model-btn');
       if (loadBtn) loadBtn.disabled = true;
 
@@ -1639,7 +1634,7 @@ export class LiveDemoTab {
       if (pckEl) pckEl.textContent = `PCK: ${pck}`;
       this.setModelStatus(`Model: ${name} (PCK: ${pck})`);
     } else if (!isLoaded) {
-      this.setModelStatus('No model loaded');
+      this.setModelStatus(i18n.t('demo.noModelLoaded'));
     }
 
     // LoRA profiles

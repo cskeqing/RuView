@@ -3,6 +3,7 @@
 import { healthService } from '../services/health.service.js';
 import { poseService } from '../services/pose.service.js';
 import { sensingService } from '../services/sensing.service.js';
+import { i18n } from '../utils/i18n.js';
 
 export class DashboardTab {
   constructor(containerElement) {
@@ -92,10 +93,10 @@ export class DashboardTab {
     const statusText = el.querySelector('.status-text');
     const statusMsg  = el.querySelector('.status-message');
     const config = {
-      'live':              { text: 'ESP32',     status: 'healthy', msg: 'Real hardware connected' },
-      'server-simulated':  { text: 'SIMULATED', status: 'warning', msg: 'Server running without hardware' },
-      'reconnecting':      { text: 'RECONNECTING', status: 'degraded', msg: 'Attempting to connect...' },
-      'simulated':         { text: 'OFFLINE',   status: 'unhealthy', msg: 'Server unreachable, local fallback' },
+      'live':              { text: i18n.t('dash.dsLive'),          status: 'healthy', msg: i18n.t('dash.dsLiveMsg') },
+      'server-simulated':  { text: i18n.t('dash.dsSim'),           status: 'warning', msg: i18n.t('dash.dsSimMsg') },
+      'reconnecting':      { text: i18n.t('dash.dsReconnecting'),  status: 'degraded', msg: i18n.t('dash.dsReconnectingMsg') },
+      'simulated':         { text: i18n.t('dash.dsOffline'),       status: 'unhealthy', msg: i18n.t('dash.dsOfflineMsg') },
     };
     const cfg = config[ds] || config['reconnecting'];
     el.className = `component-status status-${cfg.status}`;
@@ -209,11 +210,11 @@ export class DashboardTab {
         const apiStatusMessage = apiElement.querySelector('.status-message');
         
         if (apiStatusText) {
-          apiStatusText.textContent = 'HEALTHY';
+          apiStatusText.textContent = i18n.t('dash.healthy');
         }
         
         if (apiStatusMessage) {
-          apiStatusMessage.textContent = 'API server is running normally';
+          apiStatusMessage.textContent = i18n.t('dash.apiRunning');
         }
       }
     }
