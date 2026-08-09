@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RuView 项目分析报告 · WiFi 智能空间感知</title>
+<style>
+:root{
+  --bg:#f6f4ef; --panel:#fffdf8; --panel2:#f0ede4;
+  --ink:#20242e; --ink2:#4a5161; --mut:#7c8290;
+  --line:#e2ddd0; --line2:#cfc9b8;
+  --acc:#c05621; --acc2:#e8a86b; --accsoft:#fdf0e3;
+  --teal:#0f766e; --tealsoft:#e6f2f0;
+  --blue:#2c5f8a; --bluesoft:#e9f0f6;
+  --red:#b91c1c; --redsoft:#fbeaea;
+  --green:#166534; --greensoft:#e9f3ec;
+  --mono:ui-monospace,'SF Mono','JetBrains Mono',Menlo,Consolas,'Liberation Mono',monospace;
+  --serif:Georgia,'Times New Roman','Songti SC','STSong','SimSun',serif;
+  --sans:'Helvetica Neue',Helvetica,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--sans);color:var(--ink);line-height:1.75;font-size:15px;
+  background:var(--bg);
+  background-image:radial-gradient(circle,rgba(32,36,46,.045) 1px,transparent 1px);
+  background-size:22px 22px;
+}
+/* ---------- 布局 ---------- */
+.layout{display:grid;grid-template-columns:264px minmax(0,1fr);max-width:1280px;margin:0 auto}
+@media(max-width:900px){.layout{grid-template-columns:1fr}}
+/* ---------- 侧边目录 ---------- */
+aside{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;
+  padding:32px 20px 40px 24px;border-right:1px solid var(--line)}
+@media(max-width:900px){aside{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line)}}
+.brand{font-family:var(--serif);font-size:22px;font-weight:700;letter-spacing:-.02em}
+.brand em{font-style:normal;color:var(--acc)}
+.brand-sub{font-family:var(--mono);font-size:10px;color:var(--mut);letter-spacing:.14em;margin:4px 0 22px;text-transform:uppercase}
+nav a{display:flex;gap:10px;align-items:baseline;padding:6px 10px;margin:1px 0;border-radius:6px;
+  color:var(--ink2);text-decoration:none;font-size:13px;transition:.15s}
+nav a .n{font-family:var(--mono);font-size:10px;color:var(--mut);min-width:18px}
+nav a:hover{background:var(--panel2);color:var(--ink)}
+nav a.active{background:var(--accsoft);color:var(--acc);font-weight:600}
+nav a.active .n{color:var(--acc)}
+.side-note{margin-top:26px;padding:12px;border:1px dashed var(--line2);border-radius:8px;font-size:11.5px;color:var(--mut);line-height:1.6}
+/* ---------- 主区 ---------- */
+main{padding:0 48px 96px}
+@media(max-width:900px){main{padding:0 18px 64px}}
+header.hero{padding:72px 0 40px;border-bottom:2px solid var(--ink)}
+.kicker{font-family:var(--mono);font-size:11px;letter-spacing:.22em;color:var(--acc);text-transform:uppercase;margin-bottom:14px}
+h1{font-family:var(--serif);font-size:44px;line-height:1.18;letter-spacing:-.02em;font-weight:700}
+h1 .wave{color:var(--acc)}
+.lede{margin-top:18px;max-width:640px;color:var(--ink2);font-size:16px}
+.hero-meta{margin-top:26px;display:flex;flex-wrap:wrap;gap:8px;font-family:var(--mono);font-size:11px;color:var(--ink2)}
+.hero-meta span{padding:4px 10px;border:1px solid var(--line2);border-radius:999px;background:var(--panel)}
+section{padding-top:56px}
+h2{font-family:var(--serif);font-size:29px;letter-spacing:-.01em;display:flex;align-items:baseline;gap:14px;margin-bottom:6px}
+h2 .no{font-family:var(--mono);font-size:13px;color:var(--acc);font-weight:400}
+.h2-rule{height:3px;width:64px;background:var(--acc);margin:8px 0 18px;border-radius:2px}
+h3{font-size:18px;margin:30px 0 12px;font-weight:700}
+h3::before{content:'▸ ';color:var(--acc)}
+h4{font-size:15px;margin:20px 0 8px}
+p{margin:10px 0;color:var(--ink2)}
+strong{color:var(--ink)}
+ul,ol{margin:10px 0 10px 22px;color:var(--ink2)}
+li{margin:5px 0}
+code{font-family:var(--mono);font-size:.86em;background:#eceadf;padding:1.5px 5px;border-radius:4px;color:#3d3428}
+.path{font-family:var(--mono);font-size:12px;color:var(--blue);background:var(--bluesoft);padding:1.5px 6px;border-radius:4px;word-break:break-all}
+/* ---------- 卡片 ---------- */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:22px 24px;margin:18px 0;
+  box-shadow:0 1px 0 rgba(32,36,46,.03)}
+.card-grid{display:grid;gap:16px;margin:18px 0}
+.g2{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.g4{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.stat .v{font-family:var(--serif);font-size:28px;font-weight:700;color:var(--acc);letter-spacing:-.02em}
+.stat .v.teal{color:var(--teal)} .stat .v.blue{color:var(--blue)} .stat .v.red{color:var(--red)}
+.stat .l{font-size:12.5px;color:var(--mut);margin-top:4px;line-height:1.5}
+/* ---------- 表格 ---------- */
+.tblwrap{overflow-x:auto;margin:16px 0;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);
+  text-align:left;padding:11px 14px;border-bottom:2px solid var(--line2);background:var(--panel2);white-space:nowrap}
+td{padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--ink2)}
+tr:last-child td{border-bottom:0}
+tr:hover td{background:#faf8f1}
+td b{color:var(--ink)}
+td code{font-size:11.5px}
+/* ---------- 徽章/标签 ---------- */
+.tag{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.06em;padding:2px 8px;border-radius:999px;vertical-align:middle}
+.tag.acc{background:var(--accsoft);color:var(--acc);border:1px solid #eecfae}
+.tag.teal{background:var(--tealsoft);color:var(--teal);border:1px solid #b9dad5}
+.tag.blue{background:var(--bluesoft);color:var(--blue);border:1px solid #c4d6e5}
+.tag.red{background:var(--redsoft);color:var(--red);border:1px solid #eec3c3}
+.tag.green{background:var(--greensoft);color:var(--green);border:1px solid #c0dcc9}
+.tag.gray{background:#eeece3;color:var(--mut);border:1px solid var(--line2)}
+/* ---------- 提示框 ---------- */
+.callout{border-radius:10px;padding:16px 18px;margin:16px 0;border:1px solid;border-left-width:5px;font-size:14px}
+.callout .ct{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;margin-bottom:6px}
+.callout p{margin:4px 0}
+.co-measured{background:var(--greensoft);border-color:#b3d4bf;border-left-color:var(--green)}
+.co-measured .ct{color:var(--green)}
+.co-claimed{background:#fdf6e3;border-color:#ecd9a0;border-left-color:#b8860b}
+.co-claimed .ct{color:#92690a}
+.co-retracted{background:var(--redsoft);border-color:#e6b9b9;border-left-color:var(--red)}
+.co-retracted .ct{color:var(--red)}
+.co-info{background:var(--bluesoft);border-color:#c4d6e5;border-left-color:var(--blue)}
+.co-info .ct{color:var(--blue)}
+.co-warn{background:var(--accsoft);border-color:#eecfae;border-left-color:var(--acc)}
+.co-warn .ct{color:var(--acc)}
+/* ---------- 图：盒子 + 箭头 ---------- */
+.flow{display:flex;flex-direction:column;gap:0;margin:20px 0}
+.fbox{background:var(--panel);border:1.5px solid var(--ink);border-radius:8px;padding:12px 16px;text-align:center}
+.fbox .ft{font-weight:700;font-size:14px}
+.fbox .fs{font-size:12px;color:var(--mut);margin-top:2px}
+.fbox.hl{background:var(--accsoft);border-color:var(--acc)}
+.fbox.teal{background:var(--tealsoft);border-color:var(--teal)}
+.fbox.blue{background:var(--bluesoft);border-color:var(--blue)}
+.farrow{align-self:center;font-family:var(--mono);color:var(--acc);font-size:18px;line-height:1.3;padding:3px 0;text-align:center}
+.farrow small{display:block;font-size:10px;color:var(--mut);letter-spacing:.05em}
+.hrow{display:flex;align-items:stretch;gap:0;flex-wrap:wrap;justify-content:center}
+.hrow .fbox{flex:1;min-width:130px}
+.harrow{display:flex;align-items:center;font-family:var(--mono);color:var(--acc);font-size:18px;padding:0 8px}
+/* ---------- 模型结构图 ---------- */
+.model-diag{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:26px;margin:18px 0;overflow-x:auto}
+.md-row{display:flex;justify-content:center;gap:14px;flex-wrap:wrap}
+.md-box{border:1.5px solid var(--ink);border-radius:8px;padding:10px 14px;text-align:center;background:#fff;min-width:150px}
+.md-box .t{font-weight:700;font-size:13px}
+.md-box .s{font-family:var(--mono);font-size:11px;color:var(--acc);margin-top:3px}
+.md-box .d{font-size:11px;color:var(--mut);margin-top:3px}
+.md-box.in{background:var(--bluesoft);border-color:var(--blue)}
+.md-box.mid{background:var(--accsoft);border-color:var(--acc)}
+.md-box.out{background:var(--tealsoft);border-color:var(--teal)}
+.md-arr{text-align:center;font-family:var(--mono);color:var(--mut);font-size:16px;padding:4px 0}
+/* ---------- 步骤管线 ---------- */
+.steps{counter-reset:step;margin:18px 0;display:flex;flex-direction:column;gap:10px}
+.step{display:grid;grid-template-columns:44px 1fr;gap:14px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:13px 16px}
+.step .sn{counter-increment:step;width:34px;height:34px;border-radius:50%;background:var(--ink);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;font-weight:700}
+.step .sn::before{content:counter(step,decimal-leading-zero)}
+.step .sb b{font-size:14px}
+.step .sd{font-size:13px;color:var(--ink2);margin-top:2px}
+.step:hover{border-color:var(--line2);box-shadow:0 2px 8px rgba(32,36,46,.06)}
+/* ---------- 折叠 ---------- */
+details.fold{background:var(--panel);border:1px solid var(--line);border-radius:10px;margin:14px 0;padding:0}
+details.fold summary{cursor:pointer;padding:14px 18px;font-weight:700;font-size:14px;list-style:none;display:flex;justify-content:space-between;align-items:center}
+details.fold summary::-webkit-details-marker{display:none}
+details.fold summary::after{content:'＋';font-family:var(--mono);color:var(--acc)}
+details.fold[open] summary::after{content:'－'}
+details.fold .fb{padding:0 18px 16px}
+/* ---------- 公式 ---------- */
+.formula{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:14px 18px;margin:14px 0;
+  font-family:var(--serif);font-size:16px;text-align:center;font-style:italic;overflow-x:auto}
+.formula sub{font-style:normal;font-size:.7em}
+/* ---------- SVG ---------- */
+svg text{font-family:var(--sans)}
+.figcap{font-size:12px;color:var(--mut);text-align:center;margin-top:8px;font-family:var(--mono);letter-spacing:.03em}
+.wave-line{stroke-dasharray:6 4;animation:dashmove 2.2s linear infinite}
+@keyframes dashmove{to{stroke-dashoffset:-20}}
+/* ---------- 页脚 ---------- */
+footer{margin-top:80px;padding-top:24px;border-top:1px solid var(--line2);font-size:12px;color:var(--mut);font-family:var(--mono)}
+.toc-top{position:fixed;right:22px;bottom:22px;width:40px;height:40px;border-radius:50%;background:var(--ink);color:#fff;
+  border:0;cursor:pointer;font-size:16px;display:none;box-shadow:0 4px 14px rgba(0,0,0,.2)}
+.num-hi{font-family:var(--serif);font-weight:700;color:var(--acc);font-size:1.08em}
+hr.sep{border:0;border-top:1px dashed var(--line2);margin:26px 0}
+</style>
+</head>
+<body>
+<div class="layout">
+<aside>
+  <div class="brand">Ru<em>View</em></div>
+  <div class="brand-sub">WiFi Sensing · Analysis Report</div>
+  <nav id="toc">
+    <a href="#s1"><span class="n">01</span>项目概述</a>
+    <a href="#s2"><span class="n">02</span>WiFi 空间感知原理</a>
+    <a href="#s3"><span class="n">03</span>系统架构</a>
+    <a href="#s4"><span class="n">04</span>信号处理流水线</a>
+    <a href="#s5"><span class="n">05</span>模型训练体系</a>
+    <a href="#s6"><span class="n">06</span>评估结果与基准</a>
+    <a href="#s7"><span class="n">07</span>边缘部署</a>
+    <a href="#s8"><span class="n">08</span>诚实性与局限</a>
+    <a href="#s9"><span class="n">09</span>总结与展望</a>
+    <a href="#s10"><span class="n">10</span>附录</a>
+  </nav>
+  <div class="side-note">本报告基于对 RuView 仓库（<code>main</code> 分支，HEAD <code>bc4d0d26</code>）的两份独立研究：架构与 CSI 感知原理、模型训练与评估体系。所有数字均引自仓库内的基准文档与 README 诚实性声明。</div>
+</aside>
+
+<main>
+<header class="hero">
+  <div class="kicker">Project Analysis Report · 2026</div>
+  <h1>透过 WiFi 电波<span class="wave">「看见」</span>房间：<br>RuView 智能空间感知系统全解析</h1>
+  <p class="lede">RuView（前身 WiFi-DensePose）用 5–15 美元的 ESP32 节点采集 WiFi 信道状态信息（CSI），通过 Rust 信号处理引擎与神经网络实现穿墙存在检测、呼吸/心率监测、人数统计与 17 关键点姿态估计——<strong>无摄像头、无云端、完全边缘运行</strong>。</p>
+  <div class="hero-meta">
+    <span>Rust 1.89 · 42 crates</span><span>ESP-IDF v5.4</span><span>Candle / ONNX Runtime</span><span>65 个 WASM 边缘模块</span><span>205 个 ADR</span>
+  </div>
+</header>
+
+<!-- ============ 01 项目概述 ============ -->
+<section id="s1">
+  <h2><span class="no">01</span>项目概述</h2>
+  <div class="h2-rule"></div>
+  <p><strong>RuView（前身/别名 WiFi-DensePose）</strong>是一个 WiFi 空间感知平台：利用廉价 ESP32 节点采集 WiFi 信道状态信息（CSI），通过信号处理 + 神经网络实现穿墙存在检测、呼吸/心率监测、跌倒检测、人数统计、17 关键点姿态估计等能力。项目的三大核心理念是：</p>
+  <div class="card-grid g3">
+    <div class="stat"><div class="v">无摄像头</div><div class="l">以 WiFi 电磁场代替摄像头成像，天然保护隐私，可穿墙、可在黑暗中工作</div></div>
+    <div class="stat"><div class="v teal">无云端</div><div class="l">全部感知在本地完成；数据不出房间，可接入 Home Assistant / Matter</div></div>
+    <div class="stat"><div class="v blue">边缘运行</div><div class="l">从 ESP32 固件到 Raspberry Pi，WASM 热加载模块让感知算法跑在毫瓦级硬件上</div></div>
+  </div>
+
+  <h3>技术栈总览</h3>
+  <div class="tblwrap"><table>
+    <thead><tr><th>层</th><th>技术栈</th><th>具体版本（仓库证据）</th></tr></thead>
+    <tbody>
+      <tr><td><b>核心引擎</b></td><td>Rust，Cargo workspace（<span class="path">v2/Cargo.toml</span>，42 个 crate）</td><td>workspace <b>0.3.1</b>，edition 2021，toolchain <b>Rust 1.89</b>（<span class="path">v2/rust-toolchain.toml</span>）；README 标注 Rust 1.85+</td></tr>
+      <tr><td><b>异步 / Web</b></td><td>tokio、Axum（含 ws）、tower、hyper</td><td>tokio 1.35 · Axum 0.7 · tower 0.4 · hyper 1.1</td></tr>
+      <tr><td><b>信号处理</b></td><td>ndarray、rustfft、num-complex</td><td>ndarray 0.17 · rustfft 6.1 · num-complex 0.4</td></tr>
+      <tr><td><b>神经网络</b></td><td>Candle、tch（可选）、ONNX Runtime (ort)</td><td>Candle 0.4 · tch 0.24 · ort 2.0.0-rc.11</td></tr>
+      <tr><td><b>向量 / AI 后端</b></td><td>RuVector 系列 crate（crates.io 发布，vendor/ 有源码）</td><td>ruvector-core 2.2.0 · ruvector-mincut 2.0.6 · ruvector-attention 2.1.0 等</td></tr>
+      <tr><td><b>Python 绑定</b></td><td>PyO3 + maturin</td><td>PyO3 <b>0.22</b>（abi3-py310，单 wheel 覆盖 Python 3.10–3.13），maturin ≥1.7</td></tr>
+      <tr><td><b>PyPI 包</b></td><td><code>wifi-densepose</code> / <code>ruview</code></td><td><b>2.0.0</b>，编译 wheel 约 250 KB</td></tr>
+      <tr><td><b>固件</b></td><td>ESP-IDF（C），ESP32-S3（量产）/ ESP32-C6（研究，Wi-Fi 6）</td><td>ESP-IDF <b>v5.4</b>；固件版本 <b>0.8.4</b>（<span class="path">firmware/esp32-csi-node/version.txt</span>）</td></tr>
+      <tr><td><b>主 UI</b></td><td>原生 JS 模块化 Web 应用（<span class="path">ui/</span>）</td><td>WebSocket 客户端 + 3D 信号场 / 姿态可视化</td></tr>
+      <tr><td><b>dashboard/</b></td><td>Vite + Lit + TypeScript（注意：是 Lit 而非 React）</td><td>Vite 5.4 · Lit 3.2 · TS 5.6；服务于 nvsim 磁力计流水线模拟器（ADR-092），<b>并非 CSI 主感知 UI</b></td></tr>
+      <tr><td><b>桌面端</b></td><td>Tauri v2（WIP）</td><td>节点管理、OTA、WASM 部署、mesh 可视化（<span class="path">v2/crates/wifi-densepose-desktop/</span>）</td></tr>
+      <tr><td><b>遗留层</b></td><td><span class="path">server.py</span>（395 行纯 Python，HTTP:3000 + WS:3001）；<span class="path">archive/v1</span></td><td>已废弃的 PyTorch 纯 Python 版；根目录 <code>requirements.txt</code> 对应遗留栈，非当前主链路</td></tr>
+      <tr><td><b>文档</b></td><td>ADR、DDD 领域模型、research/benchmarks</td><td><b>205 个 ADR</b>（<span class="path">docs/adr/</span>）、8 个 DDD 领域模型（<span class="path">docs/ddd/</span>）</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout co-info"><div class="ct">易混淆点提示</div>
+    <p>① <span class="path">dashboard/</span> 是 nvsim NV 钻石磁力计模拟器的 Lit 仪表盘，不是 CSI 感知主 UI（主 UI 在 <span class="path">ui/</span>）；② <span class="path">python/wifi_densepose/</span> 只是 Rust 核心的 PyO3 门面，不含模型训练代码；③ 根目录 <code>requirements.txt</code> 中的 FastAPI / PyTorch 属于已废弃的 v1 遗留栈。</p>
+  </div>
+</section>
+
+<!-- ============ 02 感知原理 ============ -->
+<section id="s2">
+  <h2><span class="no">02</span>WiFi 智能空间识别原理</h2>
+  <div class="h2-rule"></div>
+  <h3>从 OFDM 到 CSI：信道如何成为"雷达"</h3>
+  <p>WiFi 路由器持续发射 <strong>OFDM</strong>（正交频分复用）信号，接收端可以逐子载波估计<strong>信道频率响应</strong>（Channel State Information，CSI）：</p>
+  <div class="formula">H(f) = |H(f)| · e<sup>jφ(f)</sup>　—— 每个子载波的幅值与相位，就是房间电磁场的"快照"</div>
+  <p>人体（约 60% 是水）是 2.4/5 GHz 电磁波的良好散射体与吸收体。人在房间里移动、呼吸、心跳时，会扰动多径传播：</p>
+  <ul>
+    <li><strong>移动</strong> → 产生类多普勒的相位漂移，反映运动速度与方向；</li>
+    <li><strong>呼吸</strong>：胸腔起伏幅度 <span class="num-hi">1–5 mm</span>，频率落在生理频带 <span class="num-hi">0.1–0.5 Hz</span>；</li>
+    <li><strong>心跳</strong>：心跳引起的体表位移仅 <span class="num-hi">0.1–0.5 mm</span>，频率在 <span class="num-hi">0.8–2.0 Hz</span>（ADR-021 给出的生理学依据）。</li>
+  </ul>
+  <p>ESP32 每帧输出 <strong>56 个子载波的 I/Q 复数对</strong>，以约 <strong>20 Hz</strong> 速率上报——相当于对房间电磁场做"低分辨率雷达采样"。这就是为什么 WiFi 可以"穿墙看见"人：它看的不是光，而是人体对多径电磁场的扰动。</p>
+
+  <div class="card" style="padding:10px">
+  <svg viewBox="0 0 860 300" width="100%" role="img" aria-label="WiFi CSI 感知概念示意图">
+    <!-- 发射器 -->
+    <g>
+      <rect x="30" y="120" width="110" height="60" rx="8" fill="#e9f0f6" stroke="#2c5f8a" stroke-width="1.5"/>
+      <text x="85" y="146" text-anchor="middle" font-size="13" font-weight="bold" fill="#2c5f8a">ESP32 发射</text>
+      <text x="85" y="163" text-anchor="middle" font-size="10" fill="#4a5161">OFDM · 信道 1/6/11</text>
+      <line x1="85" y1="120" x2="85" y2="98" stroke="#2c5f8a" stroke-width="2"/><circle cx="85" cy="94" r="4" fill="#2c5f8a"/>
+    </g>
+    <!-- 电磁波 -->
+    <path class="wave-line" d="M145 130 Q 240 60 380 110" fill="none" stroke="#c05621" stroke-width="2"/>
+    <path class="wave-line" d="M145 150 Q 260 190 380 150" fill="none" stroke="#c05621" stroke-width="2" opacity="0.55"/>
+    <path class="wave-line" d="M145 168 Q 250 250 380 185" fill="none" stroke="#c05621" stroke-width="2" opacity="0.3"/>
+    <text x="255" y="78" font-size="10" fill="#c05621">直射径 + 多径反射</text>
+    <!-- 人体 -->
+    <g>
+      <circle cx="430" cy="108" r="16" fill="#fdf0e3" stroke="#c05621" stroke-width="2"/>
+      <path d="M430 124 L430 185 M430 142 L405 168 M430 142 L455 168 M430 185 L412 230 M430 185 L448 230" stroke="#c05621" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <path d="M414 150 q 16 -10 32 0 q -16 12 -32 0" fill="none" stroke="#0f766e" stroke-width="1.4" opacity=".8"/>
+      <text x="430" y="252" text-anchor="middle" font-size="11" fill="#4a5161">人体（含水组织）扰动多径</text>
+      <text x="430" y="268" text-anchor="middle" font-size="10" fill="#7c8290">呼吸 1–5mm @ 0.1–0.5Hz · 心跳 0.1–0.5mm @ 0.8–2.0Hz</text>
+    </g>
+    <!-- 被调制的波 -->
+    <path class="wave-line" d="M475 120 Q 590 70 700 120" fill="none" stroke="#c05621" stroke-width="2"/>
+    <path class="wave-line" d="M475 165 Q 590 210 700 160" fill="none" stroke="#c05621" stroke-width="2" opacity="0.5"/>
+    <text x="585" y="62" font-size="10" fill="#c05621">幅值 |H| 与相位 φ 被人体调制</text>
+    <!-- 接收器 -->
+    <g>
+      <rect x="700" y="120" width="130" height="60" rx="8" fill="#e6f2f0" stroke="#0f766e" stroke-width="1.5"/>
+      <text x="765" y="144" text-anchor="middle" font-size="13" font-weight="bold" fill="#0f766e">ESP32 接收</text>
+      <text x="765" y="161" text-anchor="middle" font-size="10" fill="#4a5161">56 子载波 I/Q @ ~20Hz</text>
+      <line x1="765" y1="120" x2="765" y2="98" stroke="#0f766e" stroke-width="2"/><circle cx="765" cy="94" r="4" fill="#0f766e"/>
+    </g>
+    <!-- 底部小波形示意 -->
+    <text x="30" y="292" font-size="10" fill="#7c8290">CSI 时间序列（相位，示意）：</text>
+    <path d="M160 288 q 12 -14 24 0 q 12 14 24 0 q 12 -18 24 0 q 12 10 24 0 q 12 -12 24 0 q 12 16 24 0 q 12 -8 24 0 q 12 12 24 0 q 12 -16 24 0" fill="none" stroke="#0f766e" stroke-width="1.6"/>
+    <text x="400" y="292" font-size="10" fill="#7c8290">→ DSP（净化/滤波/谱图）→ 神经网络 → 存在 / 生命体征 / 姿态</text>
+  </svg>
+  <div class="figcap">图 2-1 · WiFi CSI 感知概念：发射端 → 人体扰动多径 → 接收端逐子载波记录 H(f)（纯 SVG 示意）</div>
+  </div>
+
+  <h3>ESP32 如何采集 CSI</h3>
+  <ul>
+    <li><span class="path">firmware/esp32-csi-node/main/csi_collector.c</span> 注册 ESP-IDF 官方 CSI 回调，构建时用 <code>#error</code> 守卫确保 <code>CONFIG_ESP_WIFI_CSI_ENABLED</code> 打开；</li>
+    <li>每帧按 <strong>ADR-018 二进制帧格式</strong>序列化每个子载波的 int8 I/Q 数据，经 UDP 发往聚合器（<span class="path">main/stream_sender.c</span>，带 ENOMEM 指数退避保护）；</li>
+    <li>支持 <strong>通道跳频（1 / 6 / 11）</strong>做多频段融合（ADR-029），ESP32-C6 之间用 ESP-NOW 32 字节同步包做跨板时钟对齐；</li>
+    <li>消费级硬件的原始相位被 CFO/SFO（载波/采样频偏）污染，必须经过净化才能用于感知——这正是信号处理流水线的第一步（见第 4 章）。</li>
+  </ul>
+</section>
+
+<!-- ============ 03 系统架构 ============ -->
+<section id="s3">
+  <h2><span class="no">03</span>系统架构</h2>
+  <div class="h2-rule"></div>
+  <p>整体链路由 <strong>ADR-059</strong> 定义：<code>ESP32-S3 → UDP:5005 → sensing-server → WS:8765 → browser demo</code>。数据从固件出发，经 UDP 进入 Rust 单二进制感知服务器，再通过 WebSocket / REST / MQTT / Python wheel 分发给各类消费者。</p>
+
+  <h3>端到端数据流</h3>
+  <div class="flow">
+    <div class="fbox blue"><div class="ft">ESP32-S3 / C6 节点（固件 v0.8.4，ESP-IDF v5.4）</div><div class="fs">CSI ~20Hz · ADR-018 二进制帧 · 通道跳频 1/6/11 · 设备端边缘智能 11 步流水线</div></div>
+    <div class="farrow">▼<small>UDP → 端口 5005（原始 CSI 0xC5110001 · 边缘 vitals 0xC5110002 · WASM 输出 0xC5110007）</small></div>
+    <div class="fbox hl"><div class="ft">wifi-densepose-sensing-server（Rust / Axum 单二进制）</div><div class="fs">UDP 收帧 → DSP 预处理 → 特征提取 → RuVector AI 后端 → NN 推理</div></div>
+    <div class="hrow" style="margin-top:0">
+      <div style="flex:1"></div>
+      <div class="farrow">▼ ▼ ▼ ▼</div>
+      <div style="flex:1"></div>
+    </div>
+    <div class="hrow">
+      <div class="fbox"><div class="ft">HTTP :8080</div><div class="fs">REST API + 静态 ui/</div></div>
+      <div class="harrow">·</div>
+      <div class="fbox"><div class="ft">WS :8765</div><div class="fs">/ws/sensing 实时广播 → 浏览器 ui/</div></div>
+      <div class="harrow">·</div>
+      <div class="fbox"><div class="ft">MQTT</div><div class="fs">HA-DISCO → Home Assistant / Matter</div></div>
+      <div class="harrow">·</div>
+      <div class="fbox"><div class="ft">Python wheel</div><div class="fs">pip install ruview[client]（WS + paho-mqtt）</div></div>
+    </div>
+  </div>
+  <p class="figcap">图 3-1 · 系统分层数据流（sensing-server 同时提供训练 / 录制 / 模型管理 API：training_api.rs、recording.rs、model_manager.rs）</p>
+
+  <h3>各组件职责</h3>
+  <div class="tblwrap"><table>
+    <thead><tr><th>组件</th><th>位置</th><th>职责</th></tr></thead>
+    <tbody>
+      <tr><td><b>ESP32 固件</b></td><td><span class="path">firmware/esp32-csi-node/</span></td><td>CSI 回调采集 + ADR-018 序列化 + UDP 上报；设备端 11 步边缘流水线（相位提取→解卷绕→Welford 方差→Top-K 子载波→biquad 带通→零交叉 BPM→存在检测→跌倒检测→多人聚类→XOR+RLE 压缩→广播 vitals）；WASM3 热加载运行时（<span class="path">main/wasm_runtime.c</span>，ADR-040 Tier 3）</td></tr>
+      <tr><td><b>核心类型</b> wifi-densepose-core</td><td><span class="path">v2/crates/wifi-densepose-core/</span></td><td><code>CsiFrame</code>、<code>PoseEstimate</code>、<code>Keypoint</code> 等基础类型（<span class="path">src/types.rs</span>）</td></tr>
+      <tr><td><b>信号处理</b> wifi-densepose-signal</td><td><span class="path">v2/crates/wifi-densepose-signal/</span></td><td>全部 DSP 算法：相位净化、Hampel、菲涅尔、BVP、谱图、特征提取、多基地融合（见第 4 章）</td></tr>
+      <tr><td><b>硬件适配</b> wifi-densepose-hardware</td><td><span class="path">v2/crates/wifi-densepose-hardware/</span></td><td>多厂商 CSI 解析（esp32_parser / mediatek / qualcomm / rtl8720f / ieee80211bf）、UDP 聚合器、32 字节同步包</td></tr>
+      <tr><td><b>感知服务器</b> wifi-densepose-sensing-server</td><td><span class="path">v2/crates/wifi-densepose-sensing-server/</span></td><td><b>单二进制 Axum 服务器</b>：UDP 收帧 → DSP → WebSocket 广播 → REST/静态 UI；"Replaces both ws_server.py and the Python HTTP server"</td></tr>
+      <tr><td><b>生命体征</b> wifi-densepose-vitals</td><td><span class="path">v2/crates/wifi-densepose-vitals/</span></td><td>四阶段呼吸/心率/异常提取（breathing.rs、heartrate.rs、anomaly.rs）</td></tr>
+      <tr><td><b>神经网络</b> wifi-densepose-nn</td><td><span class="path">v2/crates/wifi-densepose-nn/</span></td><td>Candle / ONNX Runtime 推理（densepose.rs、rf_encoder.rs、onnx.rs）</td></tr>
+      <tr><td><b>AETHER</b> wifi-densepose-aether</td><td><span class="path">v2/crates/wifi-densepose-aether/</span></td><td>对比学习 128 维 CSI 嵌入（ADR-024/185），零依赖纯计算叶子 crate</td></tr>
+      <tr><td><b>其他 crate</b></td><td><span class="path">v2/crates/</span></td><td>wifi-densepose-train（训练）、-mat（灾难幸存检测）、-bfld（波束成形隐私层）、ruview-swarm / -unified、homecore*（Apple Home HAP 桥）、cog-*（边缘模块打包）、nvsim（磁力计模拟）</td></tr>
+      <tr><td><b>Python 层</b></td><td><span class="path">python/</span></td><td>PyO3 绑定 crate <code>wifi-densepose-py</code>（bindings：vitals/pose/keypoint/bfld/privacy_gate/aether/meridian/mat）+ 纯 Python facade + [client] extra（asyncio WS + paho-mqtt）</td></tr>
+      <tr><td><b>主 UI</b></td><td><span class="path">ui/</span></td><td>原生 JS：websocket.service.js、sensing.service.js、pose.service.js；SensingTab、LiveDemoTab、PoseDetectionCanvas；另有 observatory 与 pose-fusion.html 双模态 demo</td></tr>
+    </tbody>
+  </table></div>
+
+  <p>README（L405–425）给出的官方流水线概览：<strong>多频段融合</strong>（3 信道 × 56 子载波 = 168 虚拟子载波）→ <strong>多基地（multistatic）注意力融合</strong> → <strong>相干门控</strong> → 信号处理（Hampel / SpotFi / Fresnel / BVP / 谱图）→ <strong>RuVector AI 后端</strong> → CRV 信号线协议 → NN → 17 关键点 + 生命体征 + 房间指纹。</p>
+</section>
+
+<!-- ============ 04 信号处理流水线 ============ -->
+<section id="s4">
+  <h2><span class="no">04</span>完整信号处理流水线</h2>
+  <div class="h2-rule"></div>
+  <p>从 ESP32 采集到最终感知输出共 <strong>9 步</strong>，每一步都有明确的代码归属：</p>
+  <div class="tblwrap"><table>
+    <thead><tr><th style="width:52px">步骤</th><th>内容</th><th>代码位置</th></tr></thead>
+    <tbody>
+      <tr><td><span class="tag blue">1 采集</span></td><td>ESP-IDF CSI 回调，每子载波 I/Q，~20 Hz，通道跳频 1/6/11</td><td><span class="path">firmware/esp32-csi-node/main/csi_collector.c</span></td></tr>
+      <tr><td><span class="tag blue">2 边缘预处理</span></td><td>（可选，节点端）相位解卷绕、Welford 方差、Top-K、biquad 带通、零交叉 BPM、存在/跌倒、XOR+RLE 压缩</td><td><span class="path">firmware/…/main/edge_processing.c</span></td></tr>
+      <tr><td><span class="tag blue">3 传输</span></td><td>ADR-018 二进制帧经 UDP→5005（ENOMEM 指数退避保护）</td><td><span class="path">firmware/…/main/stream_sender.c</span></td></tr>
+      <tr><td><span class="tag acc">4 接入解析</span></td><td>UDP 帧解析（原始 CSI / 边缘 vitals / WASM 输出三类 magic），多厂商适配</td><td><span class="path">…/wifi-densepose-sensing-server/src/csi.rs</span>、<span class="path">…/wifi-densepose-hardware/src/esp32_parser.rs</span></td></tr>
+      <tr><td><span class="tag acc">5 信号预处理</span></td><td>相位净化（共轭相乘 CSI-Ratio）、Hampel 去噪、窗函数、归一化</td><td><span class="path">wifi-densepose-signal/src/{csi_processor, csi_ratio, phase_sanitizer, hampel, hardware_norm}.rs</span></td></tr>
+      <tr><td><span class="tag acc">6 特征提取</span></td><td>幅值/相位/相关/多普勒/PSD 特征、谱图、BVP、菲涅尔区特征、子载波选择</td><td><span class="path">wifi-densepose-signal/src/{features, spectrogram, bvp, fresnel, subcarrier_selection}.rs</span></td></tr>
+      <tr><td><span class="tag acc">7 场建模与融合</span></td><td>多基地 N×(N-1) 链路融合、相干门控、房间场模型校准</td><td><span class="path">wifi-densepose-signal/src/ruvsense/{multistatic, field_model, pose_tracker}.rs</span></td></tr>
+      <tr><td><span class="tag teal">8 感知输出</span></td><td>存在/运动、呼吸/心率/异常、人数（mincut + cog-person-count）、17 关键点姿态（Candle 推理）、嵌入指纹</td><td><span class="path">signal/src/motion.rs</span>、<span class="path">wifi-densepose-vitals</span>、<span class="path">wifi-densepose-nn</span>、<span class="path">wifi-densepose-aether</span></td></tr>
+      <tr><td><span class="tag teal">9 分发</span></td><td>WebSocket :8765 → ui/，REST :8080，MQTT → Home Assistant，Python wheel 供脚本调用</td><td><span class="path">sensing-server/src/main.rs</span>、<span class="path">ui/services/websocket.service.js</span>、<span class="path">python/wifi_densepose/client/</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>重点算法详解（ADR-014 引入的 6 种学术 SOTA）</h3>
+  <div class="card-grid g2">
+    <div class="card"><h4>SpotFi 相位净化（CSI Ratio）</h4><p>消费级硬件相位含 CFO/SFO 共模污染。<span class="path">csi_ratio.rs</span> 实现 SpotFi 式<strong>共轭相乘</strong>：相邻子载波互乘消除公共相位漂移；<span class="path">phase_sanitizer.rs</span> 再做解卷绕、离群剔除与平滑（ADR-014 §1）。</p></div>
+    <div class="card"><h4>Hampel 中值滤波</h4><p><span class="path">hampel.rs</span>：滑动窗中值 + MAD 判据剔除幅度尖峰，对硬件突发噪声鲁棒，优于均值滤波且不模糊跳变。</p></div>
+    <div class="card"><h4>菲涅尔区模型（Fresnel）</h4><p><span class="path">fresnel.rs</span>：用菲涅尔区几何解释穿墙感知与呼吸引起的相位周期性——人体穿越菲涅尔区边界时相位翻转，胸腔起伏造成可预测的相位调制。</p></div>
+    <div class="card"><h4>BVP（Body Velocity Profile）</h4><p><span class="path">bvp.rs</span>：来自 Widar 3.0 的"身体速度剖面"特征，把 CSI 时频变化映射为等效运动速度剖面，天然具备跨环境迁移性。</p></div>
+    <div class="card"><h4>生命体征四阶段提取</h4><p><span class="path">wifi-densepose-vitals</span>：① EMA 静态抑制 → ② <b>0.1–0.5 Hz</b> IIR 带通 + 零交叉测呼吸 → ③ <b>0.8–2.0 Hz</b> 带通 + 自相关峰 + 子载波间相位相干加权测心率 → ④ Welford Z-score 异常检测（呼吸暂停/心动过速）。固件端 <span class="path">edge_processing.c</span> 用同算法在设备端独立运行。</p></div>
+    <div class="card"><h4>Mincut 人数分离 + AETHER 嵌入</h4><p>sensing-server 用 <code>ruvector-mincut</code> 图割做人数分离（ADR-075），配合 Kalman <code>PoseTracker</code> 与 <code>FieldModel</code> 场模型；学习式计数器在 <span class="path">cog-person-count</span>（ADR-103）。AETHER（ADR-024）对比学习产出 <b>128 维 CSI 指纹</b>，支持房间识别/异常检测/HNSW 检索，量化后仅 8 KB。</p></div>
+  </div>
+</section>
+
+<!-- ============ 05 模型训练体系 ============ -->
+<section id="s5">
+  <h2><span class="no">05</span>模型是怎么训练的（重点）</h2>
+  <div class="h2-rule"></div>
+  <div class="callout co-info"><div class="ct">关键认知</div><p>RuView 的"模型体系"不是单一模型，而是<strong>四层模型栈</strong>；且训练核心代码<strong>不在</strong> <span class="path">python/wifi_densepose/</span>（那只是 PyO3 轮子的 Python 门面），真正实现位于 Rust 工作区 <span class="path">v2/crates/</span>。</p></div>
+
+  <h3>5.1 四层模型栈总览</h3>
+  <div class="tblwrap"><table>
+    <thead><tr><th>层级</th><th>模型</th><th>位置</th><th>状态</th></tr></thead>
+    <tbody>
+      <tr><td><b>1 · 学术复现级</b></td><td>WiFi-DensePose 端到端大模型（复现 CMU arXiv:2301.00250，tch/LibTorch）</td><td><span class="path">v2/crates/wifi-densepose-train/</span></td><td>完整训练管线，支持 MM-Fi 数据集</td></tr>
+      <tr><td><b>2 · 产品级（已发布）</b></td><td>MM-Fi Transformer 姿态模型（HF <code>ruvnet/wifi-densepose-mmfi-pose</code>，torso-PCK@20 <span class="num-hi">83.59%</span>）</td><td>HF 仓库 + <span class="path">aether-arena/calibration/model.py</span>（LoRA 适配）</td><td>已发布，含效率前沿扫描</td></tr>
+      <tr><td><b>3 · 边缘推理级</b></td><td>PoseNet 小型 Conv1d TCN（<span class="num-hi">125K 参数</span>，Candle 后端，<code>pose_v1.safetensors</code>）</td><td><span class="path">v2/crates/cog-pose-estimation/</span> + <span class="path">scripts/export-onnx.py</span></td><td>已部署到 Pi 5 / cognitum-v0</td></tr>
+      <tr><td><b>4 · 自监督基础编码器</b></td><td>8 维特征 → TCN → 128 维嵌入 → 任务头（presence/count/activity/vitals）</td><td><span class="path">docs/huggingface/MODEL_CARD.md</span>，HF <code>ruvnet/wifi-densepose-pretrained</code></td><td>已发布 ONNX</td></tr>
+    </tbody>
+  </table></div>
+  <p style="font-size:13px;color:var(--mut)">另有 WASM 边缘模块（60+ 个 DSP 级检测器，非神经网络）运行在 ESP32 上，见第 7 章。</p>
+
+  <h3>5.2 端到端 WiFi-DensePose 模型架构详解</h3>
+  <p>主力训练目标定义于 <span class="path">v2/crates/wifi-densepose-train/src/model.rs</span>（1021 行，注释明确 "following CMU arXiv:2301.00250"）。全部从零初始化（Kaiming uniform），<strong>不加载 ImageNet 预训练权重</strong>。</p>
+
+  <div class="model-diag">
+    <div class="md-row">
+      <div class="md-box in"><div class="t">amplitude 幅度</div><div class="s">[B, T·tx·rx, sub]</div></div>
+      <div class="md-box in"><div class="t">phase 相位</div><div class="s">[B, T·tx·rx, sub]</div><div class="d">先经无参数相位净化：子载波一阶差分消除 CFO/SFO</div></div>
+    </div>
+    <div class="md-arr">▼（天线注意力 attn-mincut 门控，λ=0.3，等效自动天线选择）</div>
+    <div class="md-row"><div class="md-box mid"><div class="t">ModalityTranslator</div><div class="s">flat_csi→512→256 双分支 · fuse 512→3×48×48</div><div class="d">ReLU+dropout 0.2 → 拼接 → reshape 伪图像 → Conv2d(3→32)→BN→ReLU→Conv2d(32→3)→tanh</div></div></div>
+    <div class="md-arr">▼</div>
+    <div class="md-row"><div class="md-box mid"><div class="t">ResNet18 风格 Backbone</div><div class="s">[B, 3, 48, 48] → [B, 256, 12, 12]</div><div class="d">Stem Conv(3→64)+BN+ReLU；Layer1 2×BasicBlock(64)；Layer2 64→128 s2；Layer3 128→256 s2</div></div></div>
+    <div class="md-arr">┌──────────┴──────────┐</div>
+    <div class="md-row">
+      <div class="md-box out"><div class="t">KeypointHead</div><div class="s">[B, 17, 56, 56] 热图</div><div class="d">Conv(256→256→128)+BN+ReLU ×2 → 1×1 Conv(128→17) → 双线性上采样 56×56</div></div>
+      <div class="md-box out"><div class="t">DensePoseHead</div><div class="s">部件 [B, 25, 56, 56] · UV [B, 48, 56, 56]</div><div class="d">共享 Conv(256→256→256)×2+上采样；part 分支 1×1→25（24 部件+背景）；UV 分支 1×1→48 + sigmoid∈[0,1]</div></div>
+    </div>
+    <div class="md-arr" style="margin-top:10px">ModelOutput：keypoints [B,17,H,W] · part_logits [B,25,H,W] · uv_coords [B,48,H,W] · features [B,256,H/4,W/4]（供跨模态蒸馏损失）</div>
+  </div>
+  <p class="figcap">图 5-1 · WiFi-DensePose 端到端模型结构与张量形状（依据 model.rs 第 5–17 行 ASCII 图与 forward 实现）</p>
+
+  <h3>5.3 训练配置与超参数</h3>
+  <p>默认配置来自 <span class="path">wifi-densepose-train/src/config.rs</span> 的 <code>TrainingConfig::default()</code>：</p>
+  <div class="tblwrap"><table>
+    <thead><tr><th>项</th><th>默认值</th><th>项</th><th>默认值</th></tr></thead>
+    <tbody>
+      <tr><td>num_subcarriers（模型输入）</td><td><b>56</b></td><td>batch_size</td><td>8</td></tr>
+      <tr><td>native_subcarriers（MM-Fi 原始）</td><td>114</td><td>learning_rate</td><td><b>1e-3</b></td></tr>
+      <tr><td>tx × rx 天线</td><td>3 × 3</td><td>weight_decay</td><td>1e-4</td></tr>
+      <tr><td>window_frames</td><td>100</td><td>num_epochs</td><td>50</td></tr>
+      <tr><td>heatmap_size</td><td>56</td><td>warmup_epochs</td><td><b>5</b>（线性 warmup）</td></tr>
+      <tr><td>num_keypoints</td><td>17（COCO）</td><td>lr_milestones / gamma</td><td>[30, 45] / 0.1（多步衰减）</td></tr>
+      <tr><td>num_body_parts</td><td>24（DensePose）</td><td>grad_clip_norm</td><td>1.0（L2）</td></tr>
+      <tr><td>backbone_channels</td><td>256</td><td>early_stopping_patience</td><td>10</td></tr>
+      <tr><td>损失权重 λ<sub>kp</sub> / λ<sub>dp</sub> / λ<sub>tr</sub></td><td><b>0.3 / 0.6 / 0.1</b></td><td>seed</td><td>42</td></tr>
+    </tbody>
+  </table></div>
+  <p>支持非 MM-Fi 来源输入：ESP32 HT40（192 子载波）、多频段 mesh（168）等，由 <code>TrainingConfig::ht40_192()</code> / <code>for_subcarriers()</code> 配置，<span class="path">subcarrier.rs::interpolate_subcarriers</span> 做线性重采样。</p>
+
+  <h4>损失函数（<span class="path">src/losses.rs</span>）</h4>
+  <div class="formula">L<sub>total</sub> = 0.3 · L<sub>keypoint</sub> + 0.6 · L<sub>densepose</sub> + 0.1 · L<sub>transfer</sub></div>
+  <ul>
+    <li><b>关键点热图损失</b>：预测与目标高斯热图的逐像素 MSE，按可见性掩码（visibility）归一化；</li>
+    <li><b>DensePose 损失</b>：部件交叉熵（25 类）+ 前景像素 UV Smooth-L1/Huber；</li>
+    <li><b>迁移/蒸馏损失</b>：学生 backbone 特征与 RGB 教师特征的 MSE——跨模态知识迁移，是 CMU 论文的核心思想（训练时用相机教师，部署时无相机）。</li>
+  </ul>
+  <p><b>优化器与调度</b>（<span class="path">trainer.rs</span> L133–137）：AdamW（weight_decay=1e-4），线性 warmup 5 epochs + multi-step 衰减（30/45 epoch ×0.1），梯度裁剪 L2≤1.0，确定性 shuffle（seed XOR epoch）；每 epoch 验证 PCK@0.2 / OKS，按验证 PCK 保存 best checkpoint（safetensors 格式），CSV 日志记录 <code>epoch, train_loss, val_pck, val_oks, lr, …</code>。</p>
+</section>
+
+<section id="s5b" style="padding-top:8px">
+  <h3>5.4 完整训练管线（12 步）</h3>
+  <div class="steps">
+    <div class="step"><div class="sn"></div><div class="sb"><b>固件采集</b><div class="sd">ESP32-S3/C6 采集 CSI，UDP 流式输出 <span class="path">firmware/esp32-csi-node/</span>（ESP-IDF 工程）</div></div></div>
+    <div class="step"><div class="sn"></div><div class="sb"><b>数据录制</b><div class="sd">UDP 监听写入 <code>.csi.jsonl</code>；支持原始 CSI 帧（magic <code>0xC5110001</code>）与 8 维特征包（magic <code>0xC5110003</code>，48 字节）→ <span class="path">scripts/collect-training-data.py</span></div></div></div>
+    <div class="step"><div class="sn"></div><div class="sb"><b>地面真值采集</b><div class="sd">摄像头 + MediaPipe PoseLandmarker（33→17 COCO 映射表）与 CSI 时间同步 → <span class="path">scripts/collect-ground-truth.py</span></div></div></div>
+    <div class="step"><div class="sn"></div><div class="sb"><b>相机-房间标定</b><div class="sd">双棋盘格标定，把相机与 WiFi 收发器统一到房间坐标系（防"坐标过拟合"，ADR-152）→ <span class="path">scripts/calibrate-camera-room.py</span>、<span class="path">scripts/calibration_lib.py</span></div></div></div>
+    <div class="step"><div class="sn"></div><div class="sb"><b>时间对齐</b><div class="sd">相机关键点 ↔ CSI 对齐成训练对（20 帧窗口、min conf 0.5、支持时钟偏移校正）→ <span class="path">scripts/align-ground-truth.js</span> → <span class="path">data/paired/*.paired.jsonl</span></div></div></div>
+    <div class="step"><div class="sn"></div><div class="sb"><b>格式转换</b><div class="sd"><code>.csi.jsonl</code> → <code>.rvcsi</code>（JSONL：首行 CaptureHeader + 逐行 CsiFrame，含质量评分/隔离逻辑）→ <span class="path">scripts/esp32_jsonl_to_rvcsi.py</span></div></div></div>
+    <div class="step"><div class="sn"></div><div class="sb"><b>数据集加载</b><div class="sd">MM-Fi NPY（<code>S01/A01/wifi_csi.npy</code> [T,tx,rx,sc] + <code>gt_keypoints.npy</code> [T,17,3]）；<b>受试者级防泄漏划分</b>（subject-disjoint split，ADR-155）→ <span class="path">wifi-densepose-train/src/dataset.rs</span></div></div></div>
+    <div class="step"><div class="sn"></div><div class="sb"><b>训练</b><div class="sd"><code>cargo run --features tch-backend --bin train [--cuda|--dry-run]</code> → <span class="path">src/bin/train.rs</span>、<span class="path">src/trainer.rs</span></div></div></div>
+    <div class="step"><div class="sn"></div><div class="sb"><b>评估指标</b><div class="sd">PCK@0.2 / OKS / MPJPE（含 torso/bbox/absolute 归一化可选的规范实现）→ <span class="path">src/{metrics, metrics_core, accuracy, eval}.rs</span></div></div></div>
+    <div class="step"><div class="sn"></div><div class="sb"><b>ONNX 导出</b><div class="sd">safetensors → PyTorch 镜像网络 → <code>torch.onnx.export</code>（opset 18，动态 batch），一致性校验阈值 1e-5（实测 <span class="num-hi">8.94e-8</span>）→ <span class="path">scripts/export-onnx.py</span></div></div></div>
+    <div class="step"><div class="sn"></div><div class="sb"><b>基准测试</b><div class="sd">延迟/吞吐/PCK/模型大小/FLOPs，支持 sweep 对比 → <span class="path">scripts/benchmark-model.py</span></div></div></div>
+    <div class="step"><div class="sn"></div><div class="sb"><b>HuggingFace 发布</b><div class="sd">token 从 GCloud Secret Manager 取，上传 dist/models/ 七件套 → <span class="path">scripts/publish-huggingface.py</span>、<span class="path">docs/huggingface/MODEL_CARD.md</span></div></div></div>
+  </div>
+
+  <details class="fold"><summary>补充：MAE 自监督预训练（半实现）与合成数据红线</summary><div class="fb">
+    <p><b>MAE 预训练</b>：<span class="path">src/mae.rs</span> 实现 UNSW 论文（arXiv 2511.18792）的配方——80% 掩码率、(30,3) 小 patch、ViT-Small 级容量——目前只完成"无 GPU 一半"（patchify + 确定性掩码），编码器部分留待 ADR-150。</p>
+    <p><b>合成数据红线</b>：代码多处（train.rs L173–177、L229–234）明确标注 synthetic val 的 PCK <b>不得</b>作为精度数字上报（ADR-155 Tier-1.2）。</p>
+  </div></details>
+
+  <h3>5.5 数据采集、标注与校准</h3>
+  <h4>CSI 数据格式</h4>
+  <div class="tblwrap"><table>
+    <thead><tr><th>格式</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td><code>.csi.jsonl</code></td><td>ESP32 原始录制（仓库实例：60 MB 通宵录制、2.5 MB 预训练集）。帧内含 int8 I/Q 对、RSSI、子载波数等；实测存在混合帧型（70/134/26/12 子载波混杂）</td></tr>
+      <tr><td><code>.rvcsi</code></td><td>JSONL：首行 <code>rvcsi_capture_version: 1</code> CaptureHeader（source_id、adapter_profile），后续逐行 CsiFrame；移植 <code>rvcsi_core::ValidationPolicy</code> 质量评分（死子载波、幅度尖峰、RSSI 越界，quality&lt;0.25 判 Degraded）</td></tr>
+      <tr><td><code>.rvf</code>（RuVector）</td><td>预计算嵌入文件（如 <span class="path">data/clone-data.rvf</span>），用于 RuView 多节点融合管线</td></tr>
+      <tr><td><b>MM-Fi NPY</b></td><td><code>S01/A01/{wifi_csi.npy, wifi_csi_phase.npy, gt_keypoints.npy}</code>，CSI 形状 [T, n_tx, n_rx, n_sc]（114 子载波），关键点归一化 [0,1]、COCO 可见性 0/1/2</td></tr>
+    </tbody>
+  </table></div>
+  <h4>地面真值：全自动标注，无人工标注</h4>
+  <ul>
+    <li><b>MediaPipe 自动标注</b>：<span class="path">collect-ground-truth.py</span> 下载 <code>pose_landmarker_lite.task</code>，实时视频推理，把 MediaPipe 33 点映射到 COCO 17 点，与感知服务器 CSI 录制时间戳同步，输出 <span class="path">data/ground-truth/gt-*.jsonl</span>；</li>
+    <li>若附加 <code>--calibration bundle.json</code>，每条记录额外打上房间坐标系下的 bearing rays 与收发器几何（单目无深度只能给投影射线而非 3D 点——代码诚实声明此限制）；</li>
+    <li><b>双棋盘格标定</b>：<span class="path">calibration_lib.py</span> 实现双棋盘格法（默认 9×6 内角点、25mm 方格），<code>cv2.findChessboardCorners</code> + 亚像素精化 + solvePnP 求相机外参，输出带 SHA 哈希与 schema 版本的 calibration bundle；</li>
+    <li><b>LoRA 房间适配</b>：<span class="path">aether-arena/calibration/</span> 冻结旗舰 checkpoint，用约 100–200 个室内标注样本拟合 <b>rank-8 LoRA（约 11 KB）</b>，实测跨受试者 64→72%、跨环境 11→73%（ADR-150）；<span class="path">cog-pose-estimation/src/inference.rs</span> 内置同款 <code>PoseLora</code>；</li>
+    <li><b>部署基线校准</b>：新房间约 60 秒静止基线采集，写入 <code>room-profiles.json</code>。</li>
+  </ul>
+</section>
+
+<!-- ============ 06 评估结果与基准 ============ -->
+<section id="s6">
+  <h2><span class="no">06</span>评估结果与基准</h2>
+  <div class="h2-rule"></div>
+  <div class="callout co-warn"><div class="ct">阅读须知 · 证据等级</div><p>仓库严格执行 ADR-152 引用规则：<span class="tag green">MEASURED</span> 已实测 / <span class="tag acc">CLAIMED</span> 论文宣称 / <span class="tag red">已撤回</span> / <span class="tag gray">DATA-GATED</span> 数据不足不给数字。下表所有数字均可溯源到仓库基准文档。</p></div>
+
+  <div class="card-grid g4">
+    <div class="stat"><div class="v">82.69%</div><div class="l">MM-Fi torso-PCK@20（单模型，in-domain）</div></div>
+    <div class="stat"><div class="v teal">83.59%</div><div class="l">MM-Fi torso-PCK@20（graph+3-ensemble+TTA 集成）</div></div>
+    <div class="stat"><div class="v blue">96.61%</div><div class="l">WiFlow-STD 复现 PCK@20（重训，干净测试集 52,560 窗口）</div></div>
+    <div class="stat"><div class="v">36.7 KB</div><div class="l">micro int4 QAT 模型大小（74.46% PCK@20，0.135 ms）</div></div>
+  </div>
+
+  <h3>6.1 MM-Fi 自有姿态模型（<span class="path">docs/benchmarks/mmfi-wifi-sensing-study.md</span>）</h3>
+  <div class="tblwrap"><table>
+    <thead><tr><th>指标</th><th>数值</th><th>对比 / 说明</th></tr></thead>
+    <tbody>
+      <tr><td><b>姿态 in-domain torso-PCK@20</b></td><td><span class="num-hi">82.69%</span>（single）/ <span class="num-hi">83.59%</span>（集成）</td><td>超过 MultiFormer 72.25%、CSI2Pose 68.41%；曾把虚高的 91.86% 自我修正下来</td></tr>
+      <tr><td>跨受试者 zero-shot</td><td><span class="num-hi">64%</span></td><td>泛化真相（同分布随机划分 ≠ 泛化）</td></tr>
+      <tr><td>跨环境 zero-shot</td><td><span class="num-hi">~10%</span></td><td>泛化弱，需 LoRA 房间适配（11→73%）</td></tr>
+      <tr><td>动作识别 in-domain</td><td>88.08%</td><td>跨受试者仅 ~10%（88% 有泄漏膨胀风险）</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>6.2 效率前沿（<span class="path">docs/benchmarks/wifi-pose-efficiency-frontier.md</span>，延迟 batch=1）</h3>
+  <div class="tblwrap"><table>
+    <thead><tr><th>变体</th><th>参数量</th><th>延迟</th><th>torso-PCK@20</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td>nano</td><td>39,971</td><td>0.126 ms</td><td>71.76%</td><td>最小可用点</td></tr>
+      <tr><td><b>micro</b></td><td>75,237</td><td>0.224 ms</td><td><b>74.30%</b></td><td>超 SOTA</td></tr>
+      <tr><td>micro int8</td><td>—</td><td>—</td><td><span class="num-hi">74.70%</span></td><td><b>73.5 KB</b>，几乎无损</td></tr>
+      <tr><td><b>micro int4 QAT</b></td><td>—</td><td><span class="num-hi">0.135 ms</span>（单线程 CPU）</td><td>74.46%</td><td><b>36.7 KB</b>；部署验证 74.08%</td></tr>
+      <tr><td>flagship</td><td><b>2,320,869</b></td><td>—</td><td><span class="num-hi">83.59%</span></td><td>4 层/8 头 Transformer + 骨架图精炼头</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>6.3 WiFlow-STD 复现（<span class="path">benchmarks/wiflow-std/RESULTS.md</span>，487 行，最详实基准）</h3>
+  <p>复现对象：WiFlow-STD（宣称 2.23M 参数，实测 2,225,042；~0.055 GFLOPs）。重训环境：RTX 5080，~75 s/epoch，early-stop epoch 41，best epoch 36。</p>
+  <div class="tblwrap"><table>
+    <thead><tr><th>指标</th><th>论文宣称</th><th>发布 checkpoint 实测</th><th>重训实测（清洗后）</th></tr></thead>
+    <tbody>
+      <tr><td>PCK@20</td><td>97.25%</td><td><span class="tag red">0.08%（证伪）</span></td><td><span class="num-hi">96.61%</span>（干净测试集 52,560 窗口）</td></tr>
+      <tr><td>MPJPE</td><td>0.007 m</td><td>NaN（发布数据含 NaN）</td><td>0.0094</td></tr>
+    </tbody>
+  </table></div>
+  <h4>边缘优化实测（CPU，ONNX Runtime 1.26）</h4>
+  <div class="tblwrap"><table>
+    <thead><tr><th>变体</th><th>大小</th><th>batch1 延迟</th><th>PCK@20</th></tr></thead>
+    <tbody>
+      <tr><td>torch fp32</td><td>9.07 MB</td><td>11.0 ms/win</td><td>96.68%</td></tr>
+      <tr><td>ONNX fp32</td><td>8.97 MB</td><td><b>3.2 ms</b>（比 torch 快 3.4×）</td><td>96.68%（一致性 2.4e-7）</td></tr>
+      <tr><td>ONNX int8（动态）</td><td><b>2.44 MB</b></td><td>6.5 ms</td><td>96.52%（MPJPE +18%）</td></tr>
+      <tr><td>静态 QDQ Percentile conv-only</td><td>2.53 MB</td><td>5.3 ms</td><td><b>96.61%</b>，MPJPE 0.01031（最佳 int8 点）</td></tr>
+    </tbody>
+  </table></div>
+  <p><b>效率扫描亮点</b>：half（843,834 参数）96.62% <b>反超全模型</b>；<b>tiny（56,290 参数）94.11%</b> PCK@20，ONNX fp32 仅 295 KB，0.66 ms/窗口（约 1500 窗口/s）。</p>
+
+  <h3>6.4 PoseNet 边缘模型（<span class="path">docs/benchmarks/pose-estimation-cog.md</span>，v0.0.1，2026-05-19）</h3>
+  <div class="tblwrap"><table>
+    <thead><tr><th>维度</th><th>数字</th></tr></thead>
+    <tbody>
+      <tr><td>训练数据</td><td>1,077 配对样本（30 分钟坐姿）；AdamW lr 1e-3，SmoothL1(β=0.1) 置信度加权，400 epochs full-batch</td></tr>
+      <tr><td>训练耗时</td><td><b>2.1 秒</b>（RTX 5080 + candle-cuda）</td></tr>
+      <tr><td>精度（诚实的低数字）</td><td>PCK@20 = <b>3.0%</b>，PCK@50 = 18.5%，MPJPE = 0.0931 —— "data-bound, not infra-bound"</td></tr>
+      <tr><td>推理延迟</td><td>Windows x86 冷启动 76.2 ms；<b>Pi 5 真机冷启动 8.4 ms</b>；稳态 <b>~305 µs</b>；ONNX 仅 12,059 字节</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>6.5 CMU 原论文参考数据（<span class="path">references/wifi_densepose_results.csv</span>）</h3>
+  <ul>
+    <li>硬件：3×3 天线、30 子载波、100 Hz、TP-Link AC1750，总成本 $30；训练 lr 0.001、batch 16、<b>145,000 迭代</b>，损失权重 0.6/0.3/0.1；</li>
+    <li><b>WiFi 同布局</b>：AP 43.5，AP@50 87.2，dpAP_GPS 45.3；不同布局 AP 27.3；图像基线 AP 84.7；</li>
+    <li>消融：仅幅度 39.5 → +相位 40.3 → +关键点监督 42.9 → +迁移学习 43.5。</li>
+  </ul>
+
+  <h3>6.6 系统级性能（<span class="path">docs/qe-reports/03-performance-analysis.md</span>）</h3>
+  <p>系统目标：<b>20 Hz 输出（50 ms/帧预算）</b>；识别出 4 CRITICAL / 6 HIGH 性能问题（固件 topK、串行 batch 推理等），预计可省 15–40 ms/帧（预算的 30–80%）。</p>
+</section>
+
+<!-- ============ 07 边缘部署 ============ -->
+<section id="s7">
+  <h2><span class="no">07</span>边缘部署</h2>
+  <div class="h2-rule"></div>
+  <h3>7.1 ONNX 导出与量化</h3>
+  <ul>
+    <li><span class="path">scripts/export-onnx.py</span>：safetensors → PyTorch 镜像 → ONNX（opset 18、动态 batch），一致性 <span class="num-hi">8.94e-8</span>；产物 <span class="path">v2/crates/cog-pose-estimation/cog/artifacts/pose_v1.onnx</span>（仓库内可见）；</li>
+    <li>Rust 侧 ONNX Runtime 后端：<span class="path">wifi-densepose-nn/src/onnx.rs</span>（ort 2.0 API，CPU/CUDA/TensorRT 执行提供者，含动态维度安全检查）；</li>
+    <li>量化：<b>动态/静态 int8</b>（WiFlow 实测 2.44–2.53 MB、PCK 损失 ≤0.16%）与 <b>int4 QAT</b>（MM-Fi micro 模型 36.7 KB，PCK 74.46%，几乎无损）；</li>
+    <li>规划中：ONNX → Hailo Dataflow Compiler HEF 交叉编译（pending）。</li>
+  </ul>
+  <h3>7.2 WASM 边缘模块（ESP32 原生）</h3>
+  <div class="card-grid g3">
+    <div class="stat"><div class="v">65 个</div><div class="l">no_std、无堆分配 WASM 模块（5–30 KB/个），<code>wasm32-unknown-unknown</code> 目标</div></div>
+    <div class="stat"><div class="v teal">WASM3</div><div class="l">解释器（~60 KB 开销）运行在 ESP32-S3，支持热加载下发新算法（ADR-040）</div></div>
+    <div class="stat"><div class="v blue">632 个测试</div><div class="l">12 个 host API（csi_get_phase/amplitude/bpm/…、csi_emit_event）；预算分级 L&lt;2ms / S&lt;5ms / H&lt;10ms</div></div>
+  </div>
+  <div class="callout co-info"><div class="ct">延迟数字的限定</div><p><span class="path">benchmarks/edge-latency/RESULTS.md</span> 的延迟为<b>主机 x86 中位数，非 ESP32 真机</b>（诚实标注）：<code>exo_time_crystal</code> 17.3 µs、<code>med_seizure_detect</code> 105 ns、cog 稳态推理 305 µs。ESP32 真机数字标注为 "UNMEASURED, needs hardware"。合成真值验证中，可构造信号的技能 acc/prec/recall = 1.000；临床类目标明确标 <span class="tag gray">DATA-GATED</span> 不给数字。</p></div>
+  <h3>7.3 QEMU 固件测试</h3>
+  <p><span class="path">scripts/qemu-esp32s3-test.sh</span>（ADR-061）：以 mock CSI 构建固件 → 合并 flash 镜像 → <code>qemu-system-xtensa</code> 运行 → 校验 UART 输出，退出码 PASS/WARN/FAIL/FATAL；配套 <span class="path">scripts/qemu_swarm.py</span>、<span class="path">qemu-mesh-test.sh</span>、<span class="path">esp32_wasm_test.py</span>。Cog 部署实证：aarch64 交叉编译 + Ed25519 签名发布到 GCS（<code>gs://cognitum-apps/cogs/arm/…</code>），实装 cognitum-v0（Pi 5），qemu-aarch64-static 下验证过真权重加载。</p>
+  <h3>7.4 HuggingFace 发布流程</h3>
+  <p><span class="path">scripts/publish-huggingface.py</span>：从 Google Cloud Secret Manager 取 token，校验 <b>7 件套</b>后上传：<code>pretrained-encoder.onnx</code>、<code>pretrained-heads.onnx</code>、<code>pretrained.rvf</code>、<code>room-profiles.json</code>、<code>collection-witness.json</code>（SHA-256 数据溯源见证链）、<code>config.json</code>、<code>README.md</code>。已发布仓库：<code>ruvnet/wifi-densepose-pretrained</code>（自监督编码器）、<code>ruvnet/wifi-densepose-mmfi-pose</code>（含 <code>/edge</code> 目录的 int4 微模型）。另有 OccWorld 占用预测再训练（<span class="path">scripts/occworld_retrain.py</span>，VQVAE tokenizer + 自回归 Transformer 两阶段，需 ≥16GB VRAM，ADR-147）。</p>
+</section>
+
+<!-- ============ 08 诚实性与局限 ============ -->
+<section id="s8">
+  <h2><span class="no">08</span>诚实性与局限性（必读）</h2>
+  <div class="h2-rule"></div>
+  <p>RuView 的一个突出特点是<b>自我诚实</b>：README L209–226 设有 "Model weights: what's real, what's not" 专章，基准文档严格执行 ADR-152 证据等级标注。以下是必须知道的负面结果与限定：</p>
+
+  <div class="callout co-retracted"><div class="ct">已撤回 · Retracted</div>
+    <p>旧的 <b>"92.9% PCK@20"</b> 宣称已正式撤回——模型输出为常量姿态，torso 归一化重测仅 <b>19.1%</b>。引用该项目时<b>不可</b>使用该数字。</p>
+    <p>同理，MM-Fi 研究曾把虚高的 91.86% 主动修正为 82.69%/83.59%。</p></div>
+
+  <div class="callout co-claimed"><div class="ct">尚未攻克 · 自有 ESP32 数据</div>
+    <p>在自有 ESP32 数据（2,046 配对窗口）上，<b>所有微调跑法均未超过 mean-pose 基线</b>（95.9% PCK@20）：预训练微调只得 65.0%，从零训练 0%。即仓库内实时姿态模型（pose_v1，PCK@20=3.0%，运行时为 confidence=0 桩）仍是<b>低于目标的 first-cut</b>。</p>
+    <p>ADR-079 诚实面对 "CSI-only 姿态 PCK@20≈2.5%" 的现实，采用"训练时用 MediaPipe 相机做教师、部署时无相机"的配对训练路线，目标 PCK@20 ≥35%（数据收集/评估阶段仍未完成）。</p></div>
+
+  <div class="callout co-measured"><div class="ct">可背书 · Measured</div>
+    <p>只有以下数字是"已测量可背书"的：<b>MM-Fi in-domain torso-PCK@20 82.69%（单模型）/ 83.59%（集成）</b>（注意：同分布随机划分）；<b>对比编码器 82.3% temporal-triplet</b>；WiFlow-STD 重训复现 96.61%（他人数据集）。</p></div>
+
+  <h3>局限性清单</h3>
+  <div class="tblwrap"><table>
+    <thead><tr><th>局限</th><th>证据</th></tr></thead>
+    <tbody>
+      <tr><td><b>跨受试者泛化弱</b>：zero-shot 仅 64%（姿态）；动作识别跨受试者 ~10%</td><td>mmfi-wifi-sensing-study.md</td></tr>
+      <tr><td><b>跨环境泛化更弱</b>：zero-shot ~10%；需 LoRA 房间适配（100–200 样本，11→73%）</td><td>ADR-150 §3.3–3.6</td></tr>
+      <tr><td><b>ESP32 真机延迟未实测</b>：所有边缘延迟为主机 x86 外推，标注 "UNMEASURED, needs hardware"</td><td>benchmarks/edge-latency/RESULTS.md</td></tr>
+      <tr><td><b>模型加载缺口</b>：HF 发布的 JSONL RVF 权重尚不能直接被 sensing-server 的 <code>--model</code> 加载（README L183），实时服务器建议不带 <code>--model</code> 运行</td><td>README</td></tr>
+      <tr><td><b>dashboard ≠ 主 UI</b>：dashboard/ 是 nvsim 磁力计模拟器的 Lit 仪表盘，CSI 感知主 UI 在 ui/</td><td>dashboard/package.json、ADR-092</td></tr>
+      <tr><td><b>录制数据含混合帧型</b>：70/134/26/12 子载波混杂，需清洗</td><td>wiflow-std RESULTS.md 发现 1</td></tr>
+      <tr><td><b>性能预算吃紧</b>：20 Hz 目标（50 ms/帧），已知 4 CRITICAL / 6 HIGH 性能问题</td><td>qe-reports/03</td></tr>
+      <tr><td><b>WiFlow 发布 checkpoint 证伪</b>：论文宣称 97.25%，官方 checkpoint 实测仅 0.08%</td><td>benchmarks/wiflow-std/RESULTS.md</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ============ 09 总结与展望 ============ -->
+<section id="s9">
+  <h2><span class="no">09</span>总结与展望</h2>
+  <div class="h2-rule"></div>
+  <p><b>RuView 是一个工程完成度极高的 WiFi 空间感知平台</b>：从 ESP32 固件（v0.8.4）到 Rust 信号处理引擎（42 crates）、四层模型栈、65 个 WASM 边缘模块、PyPI 轮子与 HuggingFace 发布链路，构成了一条"芯片 → 服务器 → 浏览器/智能家居"的完整闭环；205 个 ADR 与严格的证据等级制度（MEASURED / CLAIMED / DATA-GATED）体现了罕见的工程诚实。</p>
+  <div class="card-grid g2">
+    <div class="card"><h4>已经成立的</h4>
+      <ul>
+        <li>端到端链路打通：ESP32 → UDP → Rust 服务器 → WS/MQTT（ADR-059）；</li>
+        <li>MM-Fi 基准上 83.59% torso-PCK@20，超过 MultiFormer / CSI2Pose；</li>
+        <li>效率前沿出色：36.7 KB int4 模型 0.135 ms 单线程推理；</li>
+        <li>WiFlow-STD 复现 96.61%，并证伪其发布 checkpoint；</li>
+        <li>边缘工程（WASM 热加载、QEMU 测试、Ed25519 签名 OTA）成熟。</li>
+      </ul></div>
+    <div class="card"><h4>仍待突破的</h4>
+      <ul>
+        <li>自有 ESP32 真实数据上姿态估计尚未超越 mean-pose 基线——"data-bound, not infra-bound"；</li>
+        <li>跨受试者（64%）与跨环境（~10%）泛化是核心瓶颈，LoRA 房间适配是当前解法；</li>
+        <li>ESP32 真机延迟、临床类健康指标仍是 DATA-GATED；</li>
+        <li>ADR-079 配对训练路线（相机教师 → 无相机部署）的数据收集与评估尚未完成；</li>
+        <li>20 Hz 实时预算下的关键性能问题待优化（预计可省 30–80% 帧预算）。</li>
+      </ul></div>
+  </div>
+  <p>展望：若配对数据采集规模补齐、LoRA 房间适配产品化，RuView 有机会把"83% 的基准成绩"转化为"真实房间里的可用感知"；其自监督 AETHER 编码器（无标签、8 KB 量化）为"无摄像头自学习"提供了可持续演进的技术底座。</p>
+</section>
+
+<!-- ============ 10 附录 ============ -->
+<section id="s10">
+  <h2><span class="no">10</span>附录</h2>
+  <div class="h2-rule"></div>
+  <h3>A · 重点 ADR 列表（docs/adr/ 共 205 个，精选 10）</h3>
+  <div class="tblwrap"><table>
+    <thead><tr><th>ADR</th><th>决策要点</th></tr></thead>
+    <tbody>
+      <tr><td><b>ADR-012</b> ESP32 CSI 传感器 Mesh</td><td>选 ESP32 而非 Intel 5300/Atheros 研究网卡：$5–15/节点、官方 ESP-IDF CSI API、可独立部署；确立"陌生人一下午可搭好 CSI mesh"的硬件路线</td></tr>
+      <tr><td><b>ADR-014</b> SOTA 信号处理</td><td>引入 6 种学术 SOTA 算法：SpotFi 共轭相乘、Hampel 滤波、Fresnel 呼吸模型、CSI 谱图、灵敏度子载波选择、Widar BVP——即 wifi-densepose-signal 各模块的设计来源</td></tr>
+      <tr><td><b>ADR-018</b> ESP32 实现路径</td><td>定义固件文件结构、<code>csi_feature_frame_t</code> 二进制线格式、UDP 聚合器、CsiFrame→CsiData 桥；时钟漂移用特征级融合解决</td></tr>
+      <tr><td><b>ADR-021</b> 生命体征流水线</td><td>呼吸（胸腔 1–5mm，0.1–0.5 Hz）与心率（0.1–0.5mm，0.8–2.0 Hz）的物理依据；复用 RuVector 原语组合成四阶段提取器</td></tr>
+      <tr><td><b>ADR-024</b> AETHER 对比嵌入</td><td>自监督对比学习产出 128 维 CSI 指纹：无标签预训练、房间识别、异常检测、HNSW 检索；~55K 参数可装入 ESP32 55KB</td></tr>
+      <tr><td><b>ADR-029</b> RuvSense 多基地感知</td><td>单节点保真度瓶颈（抖动~15cm、>2 人失败）→ 感知优先 RF 模式：多基地多链路、多频段跳频、相干门控，目标 4+ 人分离、呼吸 3m 可测</td></tr>
+      <tr><td><b>ADR-040</b> WASM 可编程感知</td><td>固件 Tier 0–3 分层：裸 CSI→基础 DSP→完整 vitals 流水线→WASM3 运行时热加载算法，无需重刷固件即可下发新感知模块</td></tr>
+      <tr><td><b>ADR-059</b> 实时 ESP32 流水线</td><td>打通 ESP32 → UDP:5005 → Axum sensing-server → WS:8765 → 浏览器 demo 的端到端链路及 <code>--source esp32</code> CLI 约定</td></tr>
+      <tr><td><b>ADR-079</b> 相机真值训练</td><td>诚实面对 CSI-only 姿态 PCK@20≈2.5%：采用"训练时用 MediaPipe 相机做教师、部署时无相机"的配对训练路线，目标 ≥35%</td></tr>
+      <tr><td><b>ADR-117</b> PyPI wheel 现代化</td><td>用 PyO3+maturin 重写 wifi-densepose pip 包，abi3-py310 单 wheel 覆盖 3.10–3.13，wheel ≤5MB 预算，SOTA 子系统按 extras 门控</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>B · 关键文件路径索引</h3>
+  <details class="fold"><summary>固件与 Rust 引擎</summary><div class="fb">
+    <p><b>固件</b>：<span class="path">firmware/esp32-csi-node/</span>（README、<code>main/csi_collector.c</code>、<code>main/edge_processing.c</code>、<code>main/stream_sender.c</code>、<code>main/wasm_runtime.c</code>、<code>main/c6_sync_espnow.c</code>、<code>provision.py</code>、<code>version.txt</code> = 0.8.4）</p>
+    <p><b>Rust 引擎</b>：<span class="path">v2/Cargo.toml</span>（workspace 与依赖版本）、<span class="path">v2/rust-toolchain.toml</span>（1.89）；<span class="path">v2/crates/wifi-densepose-sensing-server/src/{main, csi, vital_signs, pose, rvf_container}.rs</span>；<span class="path">v2/crates/wifi-densepose-signal/src/{csi_processor, csi_ratio, phase_sanitizer, hampel, fresnel, spectrogram, bvp, features, motion}.rs</span> 与 <code>ruvsense/</code>；<span class="path">v2/crates/wifi-densepose-vitals/src/{lib, breathing, heartrate, anomaly}.rs</span>；<span class="path">v2/crates/wifi-densepose-core/src/types.rs</span>；<span class="path">v2/crates/wifi-densepose-hardware/src/{esp32_parser.rs, aggregator/, sync_packet.rs}</span>；<span class="path">v2/crates/{wifi-densepose-aether, wifi-densepose-nn, wifi-densepose-train, cog-person-count, cog-pose-estimation, wifi-densepose-bfld}/</span></p>
+  </div></details>
+  <details class="fold"><summary>模型、训练与评估</summary><div class="fb">
+    <p><b>训练核心</b>：<span class="path">v2/crates/wifi-densepose-train/src/{model, losses, trainer, config, dataset, metrics, accuracy, mae, subcarrier}.rs</span>、<span class="path">src/bin/{train, verify_training}.rs</span></p>
+    <p><b>推理</b>：<span class="path">v2/crates/wifi-densepose-nn/src/{onnx, rf_encoder, translator, densepose, inference}.rs</span>；<span class="path">v2/crates/cog-pose-estimation/src/inference.rs</span> + <code>cog/artifacts/pose_v1.{safetensors,onnx}</code></p>
+    <p><b>数据与标注脚本</b>：<span class="path">scripts/{collect-training-data.py, collect-ground-truth.py, calibrate-camera-room.py, calibration_lib.py, align-ground-truth.js, esp32_jsonl_to_rvcsi.py}</span>；<span class="path">data/recordings/</span></p>
+    <p><b>基准文档</b>：<span class="path">benchmarks/wiflow-std/RESULTS.md</span>、<span class="path">benchmarks/edge-latency/RESULTS.md</span>、<span class="path">benchmarks/edge-skills/RESULTS.md</span>、<span class="path">docs/benchmarks/{mmfi-wifi-sensing-study, wifi-pose-efficiency-frontier, pose-estimation-cog, person-count-cog}.md</span>、<span class="path">references/wifi_densepose_results.csv</span>、<span class="path">docs/qe-reports/03-performance-analysis.md</span></p>
+    <p><b>发布与边缘</b>：<span class="path">scripts/{export-onnx.py, benchmark-model.py, publish-huggingface.py, occworld_retrain.py, qemu-esp32s3-test.sh}</span>；<span class="path">docs/huggingface/MODEL_CARD.md</span>；<span class="path">docs/edge-modules/README.md</span>；<span class="path">aether-arena/calibration/{model.py, calibrate.py}</span></p>
+  </div></details>
+  <details class="fold"><summary>前端、Python 与其他</summary><div class="fb">
+    <p><b>前端</b>：<span class="path">ui/</span>（README、<code>services/websocket.service.js</code>、<code>components/SensingTab.js</code>、<code>pose-fusion.html</code>）；<span class="path">dashboard/package.json</span>（Lit+Vite，nvsim 专用）；<span class="path">v2/crates/wifi-densepose-desktop/</span>（Tauri v2 WIP）；<span class="path">server.py</span>（遗留演示服务器）</p>
+    <p><b>Python</b>：<span class="path">python/{Cargo.toml, pyproject.toml, src/lib.rs, src/bindings/, wifi_densepose/client/}</span>；<span class="path">python/tests/</span>（Rust↔Python parity 测试 + 功能测试）、<span class="path">python/bench/</span>（pytest 性能基准）</p>
+    <p><b>文档</b>：<span class="path">README.md</span>（流水线图 L405–425、模型诚实性声明 L209–226）、<span class="path">docs/adr/</span>（205 个）、<span class="path">docs/ddd/</span>（8 个领域模型）、<span class="path">docs/WITNESS-LOG-028.md</span>（证据矩阵）</p>
+  </div></details>
+
+  <footer>
+    RuView Analysis Report · 生成于 2026-08 · 基于仓库 main 分支（HEAD bc4d0d26）两份独立研究报告整理<br>
+    所有精度数字均带证据等级限定；已撤回宣称（92.9% PCK）不在正文引用。
+  </footer>
+</section>
+</main>
+</div>
+
+<button class="toc-top" id="topBtn" title="返回顶部" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<script>
+(function(){
+  // 目录高亮（滚动监听）
+  var links = Array.prototype.slice.call(document.querySelectorAll('#toc a'));
+  var sections = links.map(function(a){return document.querySelector(a.getAttribute('href'));}).filter(Boolean);
+  function onScroll(){
+    var pos = window.scrollY + 120, cur = sections[0];
+    for (var i=0;i<sections.length;i++){ if (sections[i].offsetTop <= pos) cur = sections[i]; }
+    links.forEach(function(a){
+      a.classList.toggle('active', cur && a.getAttribute('href') === '#'+cur.id);
+    });
+    var btn = document.getElementById('topBtn');
+    btn.style.display = window.scrollY > 600 ? 'block' : 'none';
+  }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+  // 平滑锚点（兼容 sticky 偏移）
+  links.forEach(function(a){
+    a.addEventListener('click', function(e){
+      var t = document.querySelector(this.getAttribute('href'));
+      if (t){ e.preventDefault(); window.scrollTo({top:t.offsetTop-16, behavior:'smooth'}); history.replaceState(null,'',this.getAttribute('href')); }
+    });
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RuView 模型 ↔ 应用场景地图</title>
+<style>
+:root{
+  --bg:#060b13; --panel:#0c1524; --panel2:#101c30; --line:#1c2b45;
+  --txt:#dbe6f6; --dim:#7e93b5; --faint:#54688c;
+  --cyan:#22d3ee; --cyan-dk:#0e7490; --amber:#f5b445; --amber-dk:#9a6a12;
+  --ok:#34d399; --proto:#fb923c; --ref:#8b9bb4; --ext:#60a5fa;
+  --mono:ui-monospace,"SF Mono","Cascadia Mono","JetBrains Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg); color:var(--txt);
+  font:14px/1.7 -apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
+  background-image:
+    radial-gradient(900px 500px at 85% -5%, rgba(245,180,69,.07), transparent 60%),
+    radial-gradient(900px 600px at 8% 0%, rgba(34,211,238,.08), transparent 55%),
+    linear-gradient(rgba(34,211,238,.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(34,211,238,.03) 1px, transparent 1px);
+  background-size:auto,auto,48px 48px,48px 48px;
+  min-height:100vh;
+}
+::selection{background:rgba(34,211,238,.3)}
+.mono{font-family:var(--mono)}
+.wrap{max-width:1560px;margin:0 auto;padding:0 28px}
+a{color:var(--cyan)}
+
+/* ---------- header ---------- */
+header{position:relative;border-bottom:1px solid var(--line);overflow:hidden}
+header::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--cyan),var(--amber),var(--cyan));opacity:.7}
+.head-in{padding:44px 0 30px;position:relative}
+.kicker{font-family:var(--mono);font-size:11px;letter-spacing:.35em;color:var(--cyan);opacity:.85;margin-bottom:14px}
+h1{font-size:clamp(26px,3.4vw,40px);font-weight:800;letter-spacing:.02em;line-height:1.2}
+h1 .swap{color:var(--amber);font-family:var(--mono);padding:0 .15em}
+.sub{margin-top:14px;max-width:860px;color:var(--dim);font-size:15px}
+.stats{display:flex;flex-wrap:wrap;gap:12px;margin-top:24px}
+.stat{border:1px solid var(--line);background:rgba(12,21,36,.7);padding:8px 16px;border-radius:8px;font-family:var(--mono);font-size:12px;color:var(--dim)}
+.stat b{color:var(--txt);font-size:16px;margin-right:6px}
+.stat.c1 b{color:var(--cyan)} .stat.c2 b{color:var(--amber)} .stat.c3 b{color:var(--ok)}
+
+/* ---------- sections ---------- */
+section{margin:56px 0}
+.sec-head{display:flex;align-items:baseline;gap:14px;margin-bottom:22px;flex-wrap:wrap}
+.sec-head h2{font-size:20px;font-weight:700}
+.sec-head .idx{font-family:var(--mono);color:var(--cyan);font-size:13px;letter-spacing:.2em}
+.sec-head .hint{color:var(--faint);font-size:12px;margin-left:auto}
+
+/* ---------- map ---------- */
+.map{position:relative;overflow:hidden;display:grid;grid-template-columns:minmax(280px,340px) 1fr minmax(330px,400px);gap:0 24px;align-items:start}
+#edgeSvg{position:absolute;top:0;left:0;overflow:visible;pointer-events:none;z-index:1}
+.node{position:relative;z-index:2}
+.col-title{font-family:var(--mono);font-size:11px;letter-spacing:.3em;padding:0 4px 10px;color:var(--dim)}
+.col-title.cyan{color:var(--cyan)} .col-title.amber{color:var(--amber)}
+.col-title span{color:var(--faint)}
+.pane{border:1px solid var(--line);border-radius:12px;background:rgba(8,14,25,.55)}
+.pane-in{padding:14px}
+.pane-in::-webkit-scrollbar{width:8px}
+.pane-in::-webkit-scrollbar-thumb{background:#223350;border-radius:4px}
+.pane-in::-webkit-scrollbar-track{background:transparent}
+
+.node{position:relative;background:linear-gradient(180deg,#101c30,#0c1524);border:1px solid var(--line);
+  border-radius:8px;padding:8px 12px;margin:0 0 9px;cursor:default;
+  transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease,opacity .25s ease;
+  animation:nodeIn .5s ease backwards}
+@keyframes nodeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.node:hover{transform:translateX(3px)}
+.node-m:hover{transform:translateX(-3px)}
+.node.on{border-color:currentColor}
+.node-s.on{box-shadow:0 0 0 1px rgba(34,211,238,.4),0 0 18px rgba(34,211,238,.15)}
+.node-m.on{box-shadow:0 0 0 1px rgba(245,180,69,.4),0 0 18px rgba(245,180,69,.15)}
+.map.has-focus .node:not(.on){opacity:.3}
+.node-s{border-left:3px solid var(--cyan)}
+.node-m{border-right:3px solid var(--amber)}
+.n-name{font-size:13px;font-weight:600;line-height:1.45;display:flex;align-items:flex-start;gap:6px;flex-wrap:wrap}
+.node-s .n-name{color:#c9f2fa} .node-m .n-name{color:#fde9c8}
+.n-sub{font-family:var(--mono);font-size:10.5px;color:var(--faint);margin-top:3px;word-break:break-all}
+.cnt{font-family:var(--mono);font-size:10px;color:var(--dim);border:1px solid var(--line);border-radius:20px;padding:0 7px;margin-left:auto;flex:none}
+.grp{font-family:var(--mono);font-size:10px;letter-spacing:.22em;color:var(--amber-dk);margin:16px 0 8px;padding-left:2px}
+.grp:first-child{margin-top:2px}
+
+/* 非学习模型标记 */
+.dsp{flex:none;width:15px;height:15px;border-radius:50%;border:1px solid var(--amber);color:var(--amber);
+  font-family:var(--mono);font-size:9px;line-height:13px;text-align:center;font-weight:700;margin-top:2px}
+
+/* 状态小点（图内模型节点） */
+.dot{flex:none;width:7px;height:7px;border-radius:50%;margin-top:6px}
+.dot.ok{background:var(--ok);box-shadow:0 0 6px rgba(52,211,153,.7)}
+.dot.proto{background:var(--proto);box-shadow:0 0 6px rgba(251,146,60,.7)}
+.dot.ref{background:var(--ref)}
+.dot.ext{background:var(--ext);box-shadow:0 0 6px rgba(96,165,250,.7)}
+
+.gutter{position:relative;min-width:120px}
+.edge{fill:none;stroke-width:1.25;opacity:.5;transition:opacity .25s ease,stroke-width .25s ease}
+.edge.st-ok{stroke:var(--ok)} .edge.st-proto{stroke:var(--proto)}
+.edge.st-ref{stroke:var(--ref);stroke-dasharray:4 4;opacity:.38}
+.edge.st-ext{stroke:var(--ext)}
+.edge.on{opacity:1;stroke-width:2.4}
+.edge.on.st-ref{opacity:.95}
+.map.has-focus .edge:not(.on){opacity:.05}
+
+/* ---------- legend ---------- */
+.legend{display:flex;flex-wrap:wrap;gap:10px 22px;border:1px solid var(--line);border-radius:12px;
+  background:rgba(12,21,36,.6);padding:16px 22px;margin-top:26px;align-items:center}
+.lg{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--dim)}
+.lg b{color:var(--txt);font-weight:600}
+.sw{width:22px;height:0;border-top:2px solid}
+.sw.ok{border-color:var(--ok)} .sw.proto{border-color:var(--proto)}
+.sw.ref{border-color:var(--ref);border-top-style:dashed} .sw.ext{border-color:var(--ext)}
+.lg-sep{width:1px;height:22px;background:var(--line)}
+
+/* ---------- table ---------- */
+.tbl-wrap{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:rgba(8,14,25,.55)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{position:sticky;top:0;background:#0e1a2e;color:var(--dim);font-family:var(--mono);font-size:11px;
+  letter-spacing:.18em;text-align:left;padding:12px 16px;border-bottom:1px solid var(--line);z-index:2}
+tbody td{padding:13px 16px;border-bottom:1px solid rgba(28,43,69,.6);vertical-align:top}
+tbody tr:last-child td{border-bottom:none}
+tbody tr{transition:background .15s ease}
+tbody tr:hover{background:rgba(34,211,238,.045)}
+td.sc{width:200px}
+.sc-no{font-family:var(--mono);font-size:11px;color:var(--cyan)}
+.sc-name{font-weight:700;font-size:13.5px;margin-top:2px}
+.m-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:3px 0}
+.m-name{color:#e9eff9}
+.m-type{font-family:var(--mono);font-size:10.5px;color:var(--faint)}
+.m-path{font-family:var(--mono);font-size:10px;color:#3f5f8a;margin-left:2px}
+.badge{flex:none;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.05em;
+  padding:1.5px 8px;border-radius:20px;border:1px solid}
+.b-ok{color:var(--ok);border-color:rgba(52,211,153,.45);background:rgba(52,211,153,.09)}
+.b-proto{color:var(--proto);border-color:rgba(251,146,60,.45);background:rgba(251,146,60,.09)}
+.b-ref{color:var(--ref);border-color:rgba(139,155,180,.4);background:rgba(139,155,180,.08)}
+.b-ext{color:var(--ext);border-color:rgba(96,165,250,.45);background:rgba(96,165,250,.09)}
+.dsp-tag{flex:none;font-family:var(--mono);font-size:10px;font-weight:700;padding:1.5px 8px;border-radius:20px;
+  color:var(--amber);border:1px dashed rgba(245,180,69,.55);background:rgba(245,180,69,.06)}
+
+/* 难度等级色阶（L1 绿 → L5 红） */
+.lv-tag{flex:none;font-family:var(--mono);font-size:9.5px;font-weight:800;letter-spacing:.04em;
+  padding:1px 6px;border-radius:5px;border:1px solid;margin-top:2px}
+.lv1{color:#34d399;border-color:rgba(52,211,153,.55);background:rgba(52,211,153,.13)}
+.lv2{color:#a3e635;border-color:rgba(163,230,53,.5);background:rgba(163,230,53,.11)}
+.lv3{color:#facc15;border-color:rgba(250,204,21,.5);background:rgba(250,204,21,.1)}
+.lv4{color:#fb923c;border-color:rgba(251,146,60,.5);background:rgba(251,146,60,.11)}
+.lv5{color:#f87171;border-color:rgba(248,113,113,.5);background:rgba(248,113,113,.12)}
+/* 可靠性徽章：高=绿 / 中高·中=黄 / 低中·低=红 */
+.rel-hi{color:#34d399;border-color:rgba(52,211,153,.45);background:rgba(52,211,153,.09)}
+.rel-mid{color:#facc15;border-color:rgba(250,204,21,.45);background:rgba(250,204,21,.08)}
+.rel-lo{color:#f87171;border-color:rgba(248,113,113,.45);background:rgba(248,113,113,.09)}
+.lv-grad{flex:none;width:64px;height:8px;border-radius:4px;margin-top:2px;
+  background:linear-gradient(90deg,#34d399,#a3e635,#facc15,#fb923c,#f87171)}
+td.lv-td{width:76px;white-space:nowrap} td.rel-td{width:92px;white-space:nowrap}
+
+/* ---------- notes ---------- */
+.notes{display:grid;grid-template-columns:1fr 1.3fr;gap:22px}
+.card{border:1px solid var(--line);border-radius:12px;background:rgba(12,21,36,.6);padding:24px 26px}
+.card h3{font-size:15px;margin-bottom:16px;display:flex;align-items:center;gap:10px}
+.card h3::before{content:"";width:4px;height:16px;background:var(--cyan);border-radius:2px}
+.card.warn h3::before{background:var(--amber)}
+.honesty{border-color:rgba(245,180,69,.35)}
+.honesty p{color:var(--dim);font-size:13px;margin-bottom:12px}
+.honesty p:last-child{margin-bottom:0}
+.honesty b{color:var(--txt)}
+.honesty .hl{color:var(--amber);font-weight:700}
+.honesty code{font-family:var(--mono);font-size:11.5px;color:var(--cyan);background:rgba(34,211,238,.08);
+  border:1px solid rgba(34,211,238,.2);padding:1px 6px;border-radius:5px}
+.lg-rows{display:flex;flex-direction:column;gap:12px}
+.lg-row{display:flex;align-items:flex-start;gap:12px;font-size:13px;color:var(--dim)}
+.lg-row b{color:var(--txt)}
+
+/* ---------- reliability ---------- */
+.rel-law{border:1px solid rgba(34,211,238,.3);border-radius:12px;background:linear-gradient(135deg,rgba(34,211,238,.06),rgba(12,21,36,.6));
+  padding:22px 26px;margin-bottom:22px;font-size:14px;color:var(--dim);line-height:1.9}
+.rel-law b{color:var(--txt)}
+.rel-law .g{color:var(--ok);font-weight:700} .rel-law .r{color:#f87171;font-weight:700}
+.rel-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.rel-card{border:1px solid var(--line);border-radius:12px;background:rgba(12,21,36,.6);padding:20px 22px}
+.rel-card.rh{border-top:3px solid var(--ok)} .rel-card.rm{border-top:3px solid #facc15} .rel-card.rl{border-top:3px solid #f87171}
+.rel-card h4{font-size:14px;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.rel-card .tag-line{font-family:var(--mono);font-size:10px;color:var(--faint);margin-bottom:14px;letter-spacing:.1em}
+.rel-item{font-size:12.5px;color:var(--dim);padding:7px 0;border-bottom:1px dashed rgba(28,43,69,.8);line-height:1.6}
+.rel-item:last-child{border-bottom:none}
+.rel-item b{color:var(--txt)}
+.rel-note{margin-top:22px;border:1px solid rgba(245,180,69,.35);border-radius:12px;background:rgba(245,180,69,.05);
+  padding:16px 22px;font-size:13px;color:var(--dim)}
+.rel-note b{color:var(--amber)}
+.rel-note code{font-family:var(--mono);font-size:11.5px;color:var(--cyan)}
+@media (max-width:1100px){.rel-grid{grid-template-columns:1fr}}
+
+footer{border-top:1px solid var(--line);margin-top:64px;padding:26px 0 40px;color:var(--faint);
+  font-family:var(--mono);font-size:11px;letter-spacing:.1em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+
+@media (max-width:1150px){
+  .map{grid-template-columns:minmax(240px,300px) 1fr minmax(280px,340px)}
+}
+@media (max-width:900px){
+  .gutter,.col-title.gutter-t{display:none}
+  .map{grid-template-columns:1fr;gap:20px}
+  .notes{grid-template-columns:1fr}
+  .pane-in{max-height:none}
+  .node{animation:none}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap head-in">
+    <div class="kicker">RUVIEW · WIFI SENSING · MODEL ATLAS</div>
+    <h1>RuView 模型 <span class="swap">↔</span> 应用场景地图</h1>
+    <p class="sub">基于全仓库调研梳理：WiFi/CSI 射频感知平台 RuView 中，各<b>应用场景</b>与其背后<b>模型 / 算法</b>的完整对应关系。
+    场景按任务难度 L1→L5 从易到难排序，并标注完成可靠性评级；覆盖神经网络、DSP 信号处理与规则算法三大类，含实现状态、代码路径与权重托管位置。</p>
+    <div class="stats">
+      <div class="stat c1"><b>18</b>应用场景</div>
+      <div class="stat c2"><b>39</b>模型 / 算法</div>
+      <div class="stat c3"><b>43</b>映射连线</div>
+      <div class="stat"><b>4</b>类状态</div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- ============ 双列映射图 ============ -->
+  <section id="map-sec">
+    <div class="sec-head">
+      <span class="idx">01 /</span>
+      <h2>双列映射图</h2>
+      <span class="hint">场景按难度 L1→L5 从易到难排序 · 悬停节点可高亮关联连线与另一端节点</span>
+    </div>
+
+    <div class="map" id="map">
+      <svg id="edgeSvg" xmlns="http://www.w3.org/2000/svg"></svg>
+      <div>
+        <div class="col-title cyan">应用场景 <span>· SCENES</span></div>
+        <div class="pane"><div class="pane-in" id="scenes"></div></div>
+      </div>
+      <div class="gutter">
+        <div class="col-title gutter-t" style="visibility:hidden">·</div>
+      </div>
+      <div>
+        <div class="col-title amber">模型 / 算法 <span>· MODELS</span></div>
+        <div class="pane"><div class="pane-in" id="models"></div></div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <div class="lg"><span class="sw ok"></span><b>已实现</b> 代码/权重落地</div>
+      <div class="lg"><span class="sw proto"></span><b>原型</b> 实验性 / 研究原型</div>
+      <div class="lg"><span class="sw ref"></span><b>仅参考</b> 参考实现，无权重</div>
+      <div class="lg"><span class="sw ext"></span><b>权重外部托管</b> HuggingFace</div>
+      <div class="lg-sep"></div>
+      <div class="lg"><span class="dsp">◇</span><b>非学习模型</b> DSP / 规则 / 图算法 / 物理仿真</div>
+      <div class="lg"><span class="dot ext" style="margin:0"></span><b>节点右侧圆点</b> = 该模型状态</div>
+      <div class="lg-sep"></div>
+      <div class="lg"><span class="lv-grad"></span><b>难度色阶</b> <span class="lv-tag lv1">L1</span>易 → <span class="lv-tag lv5">L5</span>难</div>
+      <div class="lg"><b>可靠性</b> <span class="badge rel-hi">高</span> <span class="badge rel-mid">中高/中</span> <span class="badge rel-lo">低中/低</span></div>
+    </div>
+  </section>
+
+  <!-- ============ 对照表 ============ -->
+  <section id="table-sec">
+    <div class="sec-head">
+      <span class="idx">02 /</span>
+      <h2>场景 → 模型 详细对照表</h2>
+      <span class="hint">按难度从易到难排序 · 含难度等级、可靠性评级、模型类型、代码路径与状态徽章</span>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>应用场景</th><th>难度</th><th>可靠性</th><th>模型 / 算法清单（类型 · 状态 · 路径）</th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============ 可靠性分析 ============ -->
+  <section id="rel-sec">
+    <div class="sec-head">
+      <span class="idx">03 /</span>
+      <h2>可靠性分析</h2>
+      <span class="hint">基于仓库内可验证证据（基准指标、实现方式、数据规模）的评级</span>
+    </div>
+
+    <div class="rel-law">
+      <b>总体规律：可靠性与「信号物理强度」和「任务粒度」负相关。</b>
+      二值 / 粗粒度任务（存在、有无、动/静）对应 CSI 幅度能量级变化——物理信号最强，<span class="g">可靠性最高</span>；
+      连续 / 细粒度任务（关键点坐标、部位分割、身份）要求从微弱散射差异中恢复高维结构，<span class="r">可靠性最低</span>。
+      难度自左列 L1 到 L5 递增，可靠性总体随之递减。
+    </div>
+
+    <div class="rel-grid">
+      <div class="rel-card rh">
+        <h4><span class="badge rel-hi">高可靠性</span></h4>
+        <div class="tag-line">可放心用于演示 / 产品</div>
+        <div class="rel-item"><b>存在检测</b> — 预训练编码器 82.3%（held-out temporal-triplet）、count_v1 权重在库、固件 DSP 自适应阈值，三重实现互相印证。</div>
+        <div class="rel-item"><b>粗粒度活动识别</b> — 15 维特征 + Mahalanobis + 逻辑回归，统计方法鲁棒，支持 JSON 热加载按房间自适应。</div>
+        <div class="rel-item"><b>0/1 人数检测</b> — count_v1 实际按 0/1 两分类训练，该粒度下可靠。</div>
+        <div class="rel-item"><b>房间校准（LoRA）</b> — 作为增强手段实测精度 11%→73%（ADR-150）。</div>
+      </div>
+      <div class="rel-card rm">
+        <h4><span class="badge rel-mid">中可靠性</span></h4>
+        <div class="tag-line">可用，但需限定条件</div>
+        <div class="rel-item"><b>静息生命体征</b> — IIR 带通（呼吸 0.1–0.5 Hz / 心率 0.8–2.0 Hz）原理成熟；运动干扰下下降；<b>非临床级</b>。</div>
+        <div class="rel-item"><b>跌倒检测</b> — 相位加速度阈值规则；存在误报/漏报风险（宠物、物体坠落）。</div>
+        <div class="rel-item"><b>穿墙运动存在</b> — 多频基线变化检测；运动存在可靠，精确定位不可靠。</div>
+        <div class="rel-item"><b>睡眠监测</b> — 规则 + AHI 指数，静息卧室环境有利；<b>非临床筛查级</b>。</div>
+      </div>
+      <div class="rel-card rl">
+        <h4><span class="badge rel-lo">低可靠性</span></h4>
+        <div class="tag-line">研究阶段，慎用</div>
+        <div class="rel-item"><b>细粒度姿态（17 关键点）</b> — 库内 pose_v1 真实基准仅 PCK@50=18.5%（单房间小数据）；MM-Fi 82.69% 为公开基准且权重外部托管，新环境未经 LoRA 校准则精度崩塌。</div>
+        <div class="rel-item"><b>密集姿态 DensePose</b> — 研究/原型级，库内无训练权重，复现的 CMU 论文本身受质疑。</div>
+        <div class="rel-item"><b>身份识别</b> — RF Encoder Identity 头为研究阶段，跨环境泛化未验证。</div>
+        <div class="rel-item"><b>世界模型 OccWorld</b> — Candle 版属原型，Python 重训练依赖外部环境。</div>
+        <div class="rel-item"><b>材料识别 / 救援</b> — 训练数据有限，救援场景未经实战验证。</div>
+      </div>
+    </div>
+
+    <div class="rel-note">
+      <b>诚实性重申：</b><code>pose_v1</code> 的库内基准 PCK@50=18.5% 与 MM-Fi Transformer 的 torso-PCK@20=82.69%
+      来自<b style="color:var(--txt)">不同模型、不同数据集</b>，不可混用。结论：姿态估计在公开数据集上表现强，
+      但在真实新房间中未经 LoRA 校准则不可靠（11%→73% 即校准前后差距）。
+    </div>
+  </section>
+
+  <!-- ============ 说明 ============ -->
+  <section id="notes-sec">
+    <div class="sec-head">
+      <span class="idx">04 /</span>
+      <h2>说明</h2>
+    </div>
+    <div class="notes">
+      <div class="card">
+        <h3>图例</h3>
+        <div class="lg-rows">
+          <div class="lg-row"><span class="badge b-ok">已实现</span><span><b>绿色</b> — 代码已落地，可直接构建 / 运行。</span></div>
+          <div class="lg-row"><span class="badge b-proto">原型</span><span><b>橙色</b> — 实验性、研究原型或示例原型，未达生产状态。</span></div>
+          <div class="lg-row"><span class="badge b-ref">仅参考</span><span><b>灰色</b> — 仅作论文复现 / 架构参考，无权重、未集成。</span></div>
+          <div class="lg-row"><span class="badge b-ext">权重外部托管</span><span><b>蓝色</b> — 模型权重托管于 HuggingFace，不在仓库内。</span></div>
+          <div class="lg-row"><span class="dsp-tag">◇ 非学习</span><span><b>琥珀色虚线标记 ◇</b> — 表示<b>非神经网络</b>方案：DSP 信号处理、阈值/规则检测、图算法（如最小割、K-means）或物理仿真，与学习型模型明确区分。</span></div>
+          <div class="lg-row"><span class="lv-grad"></span><span><b>难度色阶 L1–L5</b> — 绿（L1 简单）经黄、橙渐变至红（L5 困难），按任务物理可行性从易到难排序；「浏览器端感知」为部署层能力，未评级。</span></div>
+          <div class="lg-row"><span class="badge rel-hi">高</span><span><b>可靠性徽章</b> — <span class="badge rel-hi">高</span>=绿（可放心使用）；<span class="badge rel-mid">中高 / 中</span>=黄（可用但需限定条件）；<span class="badge rel-lo">低中 / 低</span>=红（研究阶段，慎用）。评级依据见「03 / 可靠性分析」。</span></div>
+        </div>
+      </div>
+      <div class="card honesty">
+        <h3>诚实性声明</h3>
+        <p><b>基准数据不可混用：</b>库内 <code>pose_v1</code> 的真实基准为 <span class="hl">PCK@50 = 18.5%</span>，
+        而 MM-Fi Transformer PoseNet 的 <span class="hl">torso-PCK@20 = 82.69%</span> ——
+        两者为<b>不同模型、不同数据集</b>上的结果，不可互相替代或混合引用。</p>
+        <p><b>权重托管位置：</b>旗舰模型权重托管于 HuggingFace，仓库内不含二进制权重：
+        <code>ruvnet/wifi-densepose-mmfi-pose</code>、<code>ruvnet/wifi-densepose-pretrained</code>。</p>
+        <p><b>数据口径：</b>本页所有对应关系、状态与路径均来自全仓库调研确认的事实，未做推测性补充。</p>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  <div class="wrap" style="display:flex;justify-content:space-between;width:100%;flex-wrap:wrap;gap:10px">
+    <span>RUVIEW MODEL ↔ SCENE MAP</span>
+    <span>单文件自包含 · 无外部依赖 · 原生 SVG/JS</span>
+  </div>
+</footer>
+
+<script>
+"use strict";
+/* ================= 数据（全仓库调研确认） ================= */
+/* [id, 名称, 副标题, 难度1-5(0=未评级), 可靠性(hi/mid/lo/na), 可靠性标签, 备注] */
+const SCENES = [
+  ["s03","存在检测","presence detection",1,"hi","高","预训练编码器 82.3% · count_v1 权重在库 · 固件 DSP 三重印证"],
+  ["s04","人数统计","person counting",1,"hi","高","仅 0/1 两分类场景；多人精确计数可靠性降至中"],
+  ["s10","房间指纹 / 状态","room fingerprint",2,"mid","中","在线 K-means 无公开指标，但任务简单、聚类稳健"],
+  ["s11","活动识别","activity recognition",2,"hi","高","粗粒度 4 类 absent/still/moving/active · 统计方法鲁棒 · JSON 热加载自适应"],
+  ["s05","呼吸 / 心率","生命体征 vitals",3,"mid","中高","IIR 带通物理原理成熟 · 静息场景可靠 · 运动干扰下下降 · 非临床级"],
+  ["s07","跌倒检测","fall detection",3,"mid","中","相位加速度阈值规则 · 误报/漏报风险（宠物、物体坠落）"],
+  ["s08","穿墙成像 / 运动","through-wall",3,"mid","中","多频基线变化检测 · 运动存在可靠 · 精确定位不可靠"],
+  ["s06","睡眠 / 呼吸暂停","sleep & apnea",3,"mid","中","规则检测 + AHI 指数 · 静息卧室环境有利 · 非临床筛查级"],
+  ["s09","材料识别 / 救援","debris & material",4,"lo","低中","6 信道衰减规则 + DebrisModel 训练数据有限 · 救援场景未经实战验证"],
+  ["s12","步态分析","gait analysis",4,"mid","中→低","步频/步幅等粗指标为中 · 身份级步态为低 · DSP 统计为主"],
+  ["s13","多节点融合","multi-node fusion",4,"mid","中","Graph Transformer / CrossViewpointAttention 已实现 · 公开定量验证有限 · 工程复杂度高"],
+  ["s15","房间校准","room calibration",4,"hi","高","增强手段实测精度 11%→73%（ADR-150）· 依赖新房间采集校准数据"],
+  ["s18","CSI 表征 / 检索","representation & retrieval",5,"mid","中","工具级能力 · 嵌入质量依赖对比学习数据"],
+  ["s17","身份识别","identity",5,"lo","低","RF Encoder Identity 头为研究阶段 · 跨环境泛化未验证"],
+  ["s14","占据预测 / 世界模型","OccWorld",5,"lo","低","Candle 版已实现但属原型 · Python 重训练依赖外部环境"],
+  ["s02","密集姿态","DensePose：部位分割 + UV",5,"lo","低","研究/原型级 · 库内无训练权重 · 复现 CMU 论文但论文本身受质疑"],
+  ["s01","人体姿态估计","17 关键点 · CSI → COCO",5,"lo","低中","难度最高 · pose_v1 库内真实基准仅 PCK@50=18.5% · MM-Fi 82.69% 为公开基准且新环境必须 LoRA 校准"],
+  ["s16","浏览器端感知","WASM edge · 部署层能力",0,"na","—","平台/部署层能力，未纳入任务难度与可靠性评级"]
+];
+
+const LV_LABEL = {1:"L1 简单",2:"L2 较简单",3:"L3 中等",4:"L4 较难",5:"L5 困难"};
+const REL_CLASS = {hi:"rel-hi",mid:"rel-mid",lo:"rel-lo",na:""};
+
+/* [id, 名称, 类型描述, 路径, 状态, 非学习?] */
+const MODELS = [
+  ["m01","pose_v1","膨胀 Conv1d + MLP · CSI 56×20 → 17 COCO 关键点","v2/crates/cog-pose-estimation/","ok",0],
+  ["m02","MM-Fi Transformer PoseNet","4 层 Transformer + 骨架图精化头 + LoRA · torso-PCK@20=82.69%","aether-arena/calibration/model.py","ext",0],
+  ["m03","WiFiDensePoseModel","ModalityTranslator + ResNet18-like + KeypointHead · 复现 CMU 论文","v2/crates/wifi-densepose-train/src/model.rs","ok",0],
+  ["m04","WiFlowStdModel","TCN + 非对称 2D 卷积 + 双轴注意力","v2/crates/wifi-densepose-train/src/wiflow_std/model.rs","ok",0],
+  ["m05","WiFlowModel JS","TCN + 轴向自注意力","scripts/wiflow-model.js","proto",0],
+  ["m06","wiflow MLP","4 层 MLP · 穿墙姿态研究","examples/through-wall/wiflow_train.py","proto",0],
+  ["m07","WiFiDensePoseRCNN","参考实现 · 无权重","references/wifi_densepose_pytorch.py","ref",0],
+  ["m08","多后端推理引擎","ONNX / tch / Candle","v2/crates/wifi-densepose-nn/","ok",0],
+  ["m09","count_v1","共享 Conv1d 编码器 + 双头 · 实际仅 0/1 两类训练","v2/crates/cog-person-count/","ok",0],
+  ["m10","对比学习存在编码器","对比学习预训练 · 82.3%","—（权重外部托管）","ext",0],
+  ["m11","自适应活动分类器","质心 + Mahalanobis + 逻辑回归 · Rust","v2/crates/wifi-densepose-sensing-server/src/adaptive_classifier.rs","ok",0],
+  ["m12","固件 DSP 自适应阈值","固件层 DSP 自适应阈值","firmware/esp32-csi-node/main/edge_processing.h","ok",1],
+  ["m13","mincut-person-counter","Stoer-Wagner 图最小割","scripts/mincut-person-counter.js","ok",1],
+  ["m14","固件子载波聚类门控","固件子载波聚类多人门控","firmware/esp32-csi-node/","ok",1],
+  ["m15","vitals DSP 带通 + 自相关","wifi-densepose-vitals · DSP 带通 + 自相关","—","ok",1],
+  ["m16","固件 IIR 带通","呼吸 0.1–0.5 Hz / 心率 0.8–2.0 Hz","firmware/esp32-csi-node/","ok",1],
+  ["m17","wasm-edge vital_trend","WASM 边缘 DSP 生命体征趋势","wasm-edge/","proto",1],
+  ["m18","apnea-detector.js","规则检测 + AHI 指数","scripts/apnea-detector.js","ok",1],
+  ["m19","wasm-edge med_sleep_apnea","WASM 边缘睡眠呼吸暂停","wasm-edge/","proto",0],
+  ["m20","毫米波 HRV 睡眠规则","非 CSI、非学习 · 示例原型","examples/sleep/","proto",1],
+  ["m21","固件相位加速度阈值","跌倒检测 · 相位加速度阈值规则","firmware/esp32-csi-node/","ok",1],
+  ["m22","through-wall-detector.js","多频基线变化检测 · 规则","scripts/through-wall-detector.js","ok",1],
+  ["m23","DebrisModel","多头 CNN：材料分类 + 衰减回归 + 穿透深度","v2/crates/wifi-densepose-mat/src/ml/debris_model.rs","ok",0],
+  ["m24","material-classifier.js","6 信道频率衰减规则","scripts/material-classifier.js","ok",1],
+  ["m25","room-fingerprint.js","在线 K-means","scripts/room-fingerprint.js","ok",1],
+  ["m26","RF Encoder Activity 头","256-d 共享嵌入多任务头","v2/crates/wifi-densepose-nn/src/rf_encoder.rs","ok",0],
+  ["m27","gait-analyzer.js","步频 / 步幅 DSP 统计","scripts/gait-analyzer.js","ok",1],
+  ["m28","RF Encoder Gait 头","RF Encoder 步态任务头","v2/crates/wifi-densepose-nn/src/rf_encoder.rs","ok",0],
+  ["m29","Graph Transformer","4 头图注意力 · 节点 = ESP32","scripts/mesh-graph-transformer.js","ok",0],
+  ["m30","CrossViewpointAttention","带几何偏置的跨视角注意力","v2/crates/wifi-densepose-ruvector/src/viewpoint/attention.rs","ok",0],
+  ["m31","OccWorld Candle Transformer","自回归 Transformer · VQVAE token 输入","v2/crates/wifi-densepose-occworld-candle/","ok",0],
+  ["m32","OccWorld 重训练管线","VQVAE + Transformer 微调","scripts/occworld_retrain.py","proto",0],
+  ["m33","PoseLora 房间适配器","低秩适配 LoRA · 精度 11%→73%","v2/crates/cog-pose-estimation/ + aether-arena/calibration/cog_calibrate.py","ok",0],
+  ["m34","WasmCnnEmbedder","CNN 频谱图嵌入 + 对比学习","ui/pose-fusion/pkg/ruvector_cnn_wasm/","ok",0],
+  ["m35","ruvector-attention WASM","WASM 注意力算子","—","ok",0],
+  ["m36","nvsim 神经体素仿真","物理仿真 · 非学习","v2/crates/nvsim/","ok",1],
+  ["m37","RF Encoder Identity 头","含不确定性量化","v2/crates/wifi-densepose-nn/src/rf_encoder.rs","ok",0],
+  ["m38","CSI 频谱图 CNN + KNN","频谱图 CNN 嵌入 + KNN 检索","scripts/csi-spectrogram.js","ok",0],
+  ["m39","ruvllm CSI 嵌入模型","Transformer + LoRA + 量化 · 基准工具","—（权重外部）","ext",0]
+];
+
+/* [场景id, 模型id, 该场景语境下的状态] */
+const EDGES = [
+  ["s01","m01","ok"],["s01","m02","ext"],["s01","m03","ok"],["s01","m04","ok"],["s01","m05","proto"],["s01","m06","proto"],
+  ["s02","m03","ok"],["s02","m07","ref"],["s02","m08","ok"],
+  ["s03","m09","ok"],["s03","m10","ext"],["s03","m11","ok"],["s03","m12","ok"],
+  ["s04","m09","ok"],["s04","m13","ok"],["s04","m14","ok"],
+  ["s05","m15","ok"],["s05","m16","ok"],["s05","m17","proto"],
+  ["s06","m18","ok"],["s06","m19","proto"],["s06","m20","proto"],
+  ["s07","m21","ok"],
+  ["s08","m22","ok"],["s08","m06","proto"],
+  ["s09","m23","ok"],["s09","m24","ok"],
+  ["s10","m25","ok"],
+  ["s11","m11","ok"],["s11","m26","ok"],
+  ["s12","m27","ok"],["s12","m28","ok"],
+  ["s13","m29","ok"],["s13","m30","ok"],
+  ["s14","m31","ok"],["s14","m32","proto"],
+  ["s15","m33","ok"],
+  ["s16","m34","ok"],["s16","m35","ok"],["s16","m36","ok"],
+  ["s17","m37","ok"],
+  ["s18","m38","ok"],["s18","m39","ext"]
+];
+
+/* 右列分组（仅展示分组，不改动事实） */
+const MODEL_GROUPS = [
+  ["姿态 / 密集姿态",["m01","m02","m03","m04","m05","m06","m07","m08"]],
+  ["检测 / 计数 / 活动",["m09","m10","m11","m12","m13","m14","m25","m26","m37"]],
+  ["生命体征 / 睡眠 / 跌倒",["m15","m16","m17","m18","m19","m20","m21"]],
+  ["穿墙 / 材料 / 步态",["m22","m23","m24","m27","m28"]],
+  ["融合 / 生成 / 校准",["m29","m30","m31","m32","m33"]],
+  ["浏览器端 / 表征检索",["m34","m35","m36","m38","m39"]]
+];
+
+const STATUS_LABEL = {ok:"已实现",proto:"原型",ref:"仅参考",ext:"权重外部托管"};
+const M = Object.fromEntries(MODELS.map(m=>[m[0],m]));
+const S = Object.fromEntries(SCENES.map(s=>[s[0],s]));
+
+/* ================= 渲染节点 ================= */
+const isMobile = ()=>window.matchMedia("(max-width:900px)").matches;
+
+function sceneCount(id){ return EDGES.filter(e=>e[0]===id).length; }
+function modelCount(id){ return EDGES.filter(e=>e[1]===id).length; }
+
+function buildNodes(){
+  const sc = document.getElementById("scenes");
+  sc.innerHTML = SCENES.map((s,i)=>{
+    const lv = s[3];
+    const lvTag = lv>0 ? `<span class="lv-tag lv${lv}">L${lv}</span>` : `<span class="lv-tag" style="opacity:.5">—</span>`;
+    const relDot = s[4]!=="na" ? `<span class="dot ${s[4]==="hi"?"ok":s[4]==="mid"?"proto":"ref"}" title="可靠性：${s[5]}" style="${s[4]==="mid"?"background:#facc15;box-shadow:0 0 6px rgba(250,204,21,.7)":s[4]==="lo"?"background:#f87171;box-shadow:0 0 6px rgba(248,113,113,.7)":""}"></span>` : "";
+    return `
+    <div class="node node-s" data-node="${s[0]}" style="animation-delay:${i*35}ms">
+      <div class="n-name">${lvTag}${s[1]}${relDot}<span class="cnt">${sceneCount(s[0])}</span></div>
+      <div class="n-sub">#${String(i+1).padStart(2,"0")} · ${s[2]}</div>
+    </div>`;
+  }).join("");
+
+  const mc = document.getElementById("models");
+  let html = "", idx = 0;
+  for(const [gName, ids] of MODEL_GROUPS){
+    html += `<div class="grp">// ${gName}</div>`;
+    for(const id of ids){
+      const m = M[id];
+      html += `
+      <div class="node node-m" data-node="${id}" style="animation-delay:${(idx++)*25}ms">
+        <div class="n-name">${m[5]?'<span class="dsp">◇</span>':""}${m[1]}<span class="dot ${m[4]}"></span><span class="cnt">${modelCount(id)}</span></div>
+        <div class="n-sub">${m[2]}</div>
+      </div>`;
+    }
+  }
+  mc.innerHTML = html;
+}
+
+/* ================= 渲染连线 ================= */
+function drawEdges(){
+  const svg = document.getElementById("edgeSvg");
+  svg.innerHTML = "";
+  if(isMobile()) return;
+
+  const mapRect = document.getElementById("map").getBoundingClientRect();
+  svg.setAttribute("width", mapRect.width);
+  svg.setAttribute("height", mapRect.height);
+  svg.style.width = mapRect.width+"px";
+  svg.style.height = mapRect.height+"px";
+  svg.setAttribute("viewBox", `0 0 ${mapRect.width} ${mapRect.height}`);
+
+  const frag = document.createDocumentFragment();
+  for(const [sid, mid, st] of EDGES){
+    const a = document.querySelector(`[data-node="${sid}"]`).getBoundingClientRect();
+    const b = document.querySelector(`[data-node="${mid}"]`).getBoundingClientRect();
+    const x1 = a.right - mapRect.left, y1 = a.top + a.height/2 - mapRect.top;
+    const x2 = b.left - mapRect.left,  y2 = b.top + b.height/2 - mapRect.top;
+    const dx = Math.max(40,(x2-x1)*0.45);
+    const p = document.createElementNS("http://www.w3.org/2000/svg","path");
+    p.setAttribute("d", `M ${x1} ${y1} C ${x1+dx} ${y1}, ${x2-dx} ${y2}, ${x2} ${y2}`);
+    p.setAttribute("class", `edge st-${st}`);
+    p.dataset.edge = `${sid}~${mid}`;
+    frag.appendChild(p);
+  }
+  svg.appendChild(frag);
+}
+
+/* ================= 悬停交互 ================= */
+function bindHover(){
+  const map = document.getElementById("map");
+  map.addEventListener("mouseover", e=>{
+    const node = e.target.closest(".node");
+    if(!node) return;
+    const id = node.dataset.node;
+    map.classList.add("has-focus");
+    document.querySelectorAll(".node").forEach(n=>{
+      n.classList.toggle("on", n===node ||
+        EDGES.some(ed=>(ed[0]===id&&ed[1]===n.dataset.node)||(ed[1]===id&&ed[0]===n.dataset.node)));
+    });
+    document.querySelectorAll(".edge").forEach(p=>{
+      const [s,m] = p.dataset.edge.split("~");
+      p.classList.toggle("on", s===id||m===id);
+    });
+  });
+  map.addEventListener("mouseleave", clearFocus);
+  const gutter = document.querySelector(".gutter");
+  if(gutter) gutter.addEventListener("mouseover", clearFocus);
+}
+function clearFocus(){
+  const map = document.getElementById("map");
+  map.classList.remove("has-focus");
+  document.querySelectorAll(".node.on").forEach(n=>n.classList.remove("on"));
+  document.querySelectorAll(".edge.on").forEach(p=>p.classList.remove("on"));
+}
+
+/* ================= 渲染对照表 ================= */
+function buildTable(){
+  const tb = document.getElementById("tbody");
+  tb.innerHTML = SCENES.map((s,i)=>{
+    const rows = EDGES.filter(e=>e[0]===s[0]).map(([ ,mid,st])=>{
+      const m = M[mid];
+      return `<div class="m-row">
+        ${m[5]?'<span class="dsp-tag">◇ 非学习</span>':""}
+        <span class="m-name">${m[1]}</span>
+        <span class="m-type">${m[2]}</span>
+        ${m[3]&&m[3]!=="—"&&!m[3].startsWith("—")?`<span class="m-path">${m[3]}</span>`:""}
+        <span class="badge b-${st}">${STATUS_LABEL[st]}</span>
+      </div>`;
+    }).join("");
+    return `<tr data-scene="${s[0]}">
+      <td class="sc"><div class="sc-no">SCENE ${String(i+1).padStart(2,"0")}</div><div class="sc-name">${s[1]}</div></td>
+      <td class="lv-td">${s[3]>0?`<span class="lv-tag lv${s[3]}">${LV_LABEL[s[3]]}</span>`:`<span style="color:var(--faint);font-size:12px">未评级</span>`}</td>
+      <td class="rel-td">${s[4]!=="na"?`<span class="badge ${REL_CLASS[s[4]]}">${s[5]}</span><div style="font-size:10.5px;color:var(--faint);margin-top:6px;white-space:normal;max-width:170px">${s[6]}</div>`:`<span style="color:var(--faint);font-size:12px">—</span>`}</td>
+      <td>${rows}</td>
+    </tr>`;
+  }).join("");
+}
+
+/* ================= 表格行 ↔ 图联动 ================= */
+function bindTableHover(){
+  const map = document.getElementById("map");
+  document.getElementById("tbody").addEventListener("mouseover", e=>{
+    const tr = e.target.closest("tr[data-scene]");
+    if(!tr) return;
+    const target = document.querySelector(`.node[data-node="${tr.dataset.scene}"]`);
+    /* 仅做高亮联动，禁止 scrollIntoView：滚动时鼠标划过表格行会触发 mouseover，
+       若此时滚动视口会把页面拽回映射图，造成“往下翻却跳顶” */
+    if(target){ target.dispatchEvent(new Event("mouseover",{bubbles:true})); }
+  });
+  document.getElementById("tbody").addEventListener("mouseleave", ()=>{
+    map.dispatchEvent(new Event("mouseleave"));
+  });
+}
+
+/* ================= 布局刷新 ================= */
+function relayout(){ drawEdges(); }
+
+window.addEventListener("resize", relayout);
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(relayout);
+
+buildNodes();
+buildTable();
+drawEdges();
+bindHover();
+bindTableHover();
+setTimeout(relayout, 300);
+setTimeout(relayout, 900);
+</script>
+</body>
+</html>
